@@ -2,7 +2,9 @@
 
 ## Local evidence · 2026-10-03
 
-Baseline: 2310502c9f3b0d6a0c369690cabe8f49afeef8b7. Current preview: v0.2.0, .NET 10.0.12, SDK 10.0.401, Windows x64 portable.
+The v0.2.1 redesign was rebuilt and packaged locally. All 39 regression checks and the packaged read-only smoke check pass. The 84-layout check also verifies that responsive card bounds stay within their panel. Actual-content WPF renders were reviewed for Overview, Profiles, Optimizations, Light, High contrast and the compact 200% layout. The native desktop/Narrator/OS transition limitations below remain open.
+
+Baseline: 2310502c9f3b0d6a0c369690cabe8f49afeef8b7. Current preview: v0.2.1, .NET 10.0.12, SDK 10.0.401, Windows x64 portable.
 
 | Check | Result | What it establishes |
 |---|---|---|
@@ -19,9 +21,9 @@ The 39 default checks preserve the original eight scenarios and cover saved orig
 
 No default check calls native tuning writes, creates a restore point, terminates a process, removes a package or sends a network probe. Restore creation tests verify result mapping, not real provider behavior. The unsigned-install test verifies there is no installation path; it is not a test of a configured signature verifier. Future registry absence/type/view operations and dependency graphs are deferred, not silently claimed tested.
 
-## Measured application overhead
+## Earlier v0.2.0 application overhead
 
-Measured the packaged preview with its own `--measure-performance` mode: one visible-idle and one minimized window, each sampled for 20 seconds after a 10-second settle period. [Raw measurements](performance.json).
+The following historical measurements are from v0.2.0, before the v0.2.1 visual redesign. They are not new v0.2.1 measurements. Measured that packaged preview with its own `--measure-performance` mode: one visible-idle and one minimized window, each sampled for 20 seconds after a 10-second settle period. [Raw measurements](performance.json).
 
 | Phase | CPU, share of whole 6-core machine | Average working set | Peak working set |
 |---|---:|---:|---:|

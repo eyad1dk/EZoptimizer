@@ -5,6 +5,7 @@ WPF and .NET 10 LTS remain the native stack. `MainWindow` contains view lifecycl
 | Module | Responsibility |
 |---|---|
 | Design.xaml | Dynamic colors, typography, spacing, focus and native control templates |
+| Presentation.cs | Adaptive card layout and presentation-only labels/icons; no operation execution |
 | MainWindow.xaml | Scrollable views, cards, persistent review queue and accessible names |
 | Domain.cs | Stable catalog IDs/versions, typed-value validation, planning, eligibility and recommendation rules |
 | WindowsSettings.cs | Allowlisted SPI preferences and installed power plans; fixed system executable, no shell |
