@@ -42,7 +42,7 @@ public sealed class UpdateService(HttpClient? client = null) : IUpdateService
   try
   {
    using var request = new HttpRequestMessage(HttpMethod.Get,"https://api.github.com/repos/eyad1dk/EZoptimizer/releases?per_page=30");
-   request.Headers.UserAgent.ParseAdd("EZoptimizer/0.2.0");
+   request.Headers.UserAgent.ParseAdd("EZoptimizer/0.2.1");
    request.Headers.Accept.ParseAdd("application/vnd.github+json");
    using var response = await http.SendAsync(request,HttpCompletionOption.ResponseHeadersRead,token);
    if (response.StatusCode is HttpStatusCode.Forbidden or HttpStatusCode.TooManyRequests)
@@ -53,7 +53,7 @@ public sealed class UpdateService(HttpClient? client = null) : IUpdateService
    using var bounded = new MemoryStream(); var buffer = new byte[8192];
    int count; while ((count = await stream.ReadAsync(buffer,token)) != 0)
    { if (bounded.Length + count > 1048576) return new("Invalid","Release metadata exceeds the size limit.",null,null); bounded.Write(buffer,0,count); }
-   return Parse(System.Text.Encoding.UTF8.GetString(bounded.ToArray()),includePreviews,new Version(0,2,0));
+   return Parse(System.Text.Encoding.UTF8.GetString(bounded.ToArray()),includePreviews,new Version(0,2,1));
   }
   catch (OperationCanceledException) { return new("Offline or timeout","The check timed out or was cancelled. You can keep using the app offline.",null,null); }
   catch (HttpRequestException) { return new("Offline","Could not reach GitHub. No update was downloaded.",null,null); }

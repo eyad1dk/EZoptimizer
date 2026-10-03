@@ -31,7 +31,7 @@ public sealed class DesktopInteraction : IUserInteraction
  {
   var high=SystemParameters.HighContrast||theme=="High contrast";
   bool light=theme=="Light" || theme=="Windows" && (int?)(Registry.GetValue(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize","AppsUseLightTheme",0))==1;
-  var colors=high?new[]{"#000000","#000000","#202020","#FFFFFF","#FFFFFF","#FFFFFF","#FFFF00","#000000"}:light?new[]{"#F4F6FA","#FFFFFF","#E3EAF3","#76879C","#142034","#45566D","#096850","#FFFFFF"}:new[]{"#0B1220","#151F30","#23334A","#40516C","#F1F5FC","#B9C7DA","#66E4C0","#062B22"};
+  var colors=high?new[]{"#000000","#000000","#202020","#FFFFFF","#FFFFFF","#FFFFFF","#FFFF00","#000000"}:light?new[]{"#F3F5F2","#FFFFFF","#E8EEE8","#C5CEC5","#19241E","#526158","#245C3C","#FFFFFF"}:new[]{"#101314","#191D1F","#252B2D","#303638","#F3F6F5","#A6AFAD","#B6F3CD","#142C20"};
   var keys=new[]{"Canvas","Surface","Raised","Line","Ink","Muted","Accent","OnAccent"};
   for(int i=0;i<keys.Length;i++)Application.Current.Resources[keys[i]]=new SolidColorBrush((Color)ColorConverter.ConvertFromString(colors[i]));
   if(SystemParameters.HighContrast){Application.Current.Resources["Canvas"]=SystemColors.WindowBrush;Application.Current.Resources["Surface"]=SystemColors.WindowBrush;Application.Current.Resources["Raised"]=SystemColors.ControlBrush;Application.Current.Resources["Ink"]=SystemColors.WindowTextBrush;Application.Current.Resources["Muted"]=SystemColors.WindowTextBrush;Application.Current.Resources["Accent"]=SystemColors.HighlightBrush;Application.Current.Resources["OnAccent"]=SystemColors.HighlightTextBrush;Application.Current.Resources["Line"]=SystemColors.WindowTextBrush;}
@@ -45,16 +45,25 @@ public partial class MainWindow : Window
  {
   InitializeComponent();ViewModel=new(dataRoot,new DesktopInteraction(),recoveryOnly);DataContext=ViewModel;
   timer.Interval=TimeSpan.FromSeconds(2);timer.Tick+=async (_,_)=>{timer.Interval=TimeSpan.FromSeconds(IsActive&&WindowState!=WindowState.Minimized?2:10);await ViewModel.TickAsync();};
-  ViewModel.PropertyChanged+=(_,e)=>{if(e.PropertyName==nameof(MainViewModel.Status))UIElementAutomationPeer.CreatePeerForElement(OperationStatus)?.RaiseAutomationEvent(AutomationEvents.LiveRegionChanged);};
+  ViewModel.PropertyChanged+=(_,e)=>{if(e.PropertyName==nameof(MainViewModel.Status))UIElementAutomationPeer.CreatePeerForElement(OperationStatus)?.RaiseAutomationEvent(AutomationEvents.LiveRegionChanged);if(e.PropertyName==nameof(MainViewModel.Page))PageScroll.ScrollToTop();};
   Closing+=ClosingWindow;Closed+=(_,_)=>{timer.Stop();SystemParameters.StaticPropertyChanged-=SystemChanged;SystemEvents.UserPreferenceChanged-=PreferenceChanged;ViewModel.Dispose();};SystemParameters.StaticPropertyChanged+=SystemChanged;SystemEvents.UserPreferenceChanged+=PreferenceChanged;
  }
  public async Task InitializeAsync(bool poll=true){await ViewModel.InitializeAsync();if(poll)timer.Start();}
+ private void MinimizeWindow(object sender,RoutedEventArgs e)=>SystemCommands.MinimizeWindow(this);
+ private void MaximizeWindow(object sender,RoutedEventArgs e){if(WindowState==WindowState.Maximized)SystemCommands.RestoreWindow(this);else SystemCommands.MaximizeWindow(this);}
+ private void CloseWindow(object sender,RoutedEventArgs e)=>Close();
  public void VerifyPageLayout()
  {
   IEnumerable<FrameworkElement> Elements(DependencyObject root){for(int i=0;i<VisualTreeHelper.GetChildrenCount(root);i++){var child=VisualTreeHelper.GetChild(root,i);if(child is FrameworkElement f)yield return f;foreach(var nested in Elements(child))yield return nested;}}
   var pages=Elements(Root).Where(e=>e.Tag?.ToString()?.StartsWith("Page-")==true && e.Visibility==Visibility.Visible).ToList();
   if(pages.Count!=1||pages[0].ActualWidth<=0||pages[0].Tag.ToString()!="Page-"+ViewModel.Page)throw new InvalidOperationException("Navigation did not produce exactly one measurable page.");
   if(System.Windows.Automation.AutomationProperties.GetName(OperationStatus)!="Operation status")throw new InvalidOperationException("Status automation name is missing.");
+  foreach(var panel in Elements(Root).OfType<AdaptivePanel>())
+   foreach(UIElement child in panel.Children)
+   {
+    var bounds=child.TransformToAncestor(panel).TransformBounds(new Rect(new Point(),child.RenderSize));
+    if(bounds.Left < -1 || bounds.Right > panel.ActualWidth+1)throw new InvalidOperationException("A responsive card exceeds its available width.");
+   }
  }
  private void SystemChanged(object? sender,PropertyChangedEventArgs e){if(e.PropertyName==nameof(SystemParameters.HighContrast))new DesktopInteraction().ApplyTheme(ViewModel.Theme);}
  private void PreferenceChanged(object sender,UserPreferenceChangedEventArgs e){if(ViewModel.Theme=="Windows" && e.Category is UserPreferenceCategory.General or UserPreferenceCategory.Color or UserPreferenceCategory.VisualStyle)Dispatcher.InvokeAsync(()=>new DesktopInteraction().ApplyTheme(ViewModel.Theme));}

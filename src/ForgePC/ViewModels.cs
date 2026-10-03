@@ -41,6 +41,13 @@ public sealed class MainViewModel : Observable, IDisposable
  public ObservableCollection<string> Startup {get;}=[];
  public string[] Pages {get;}=["Overview","Recommendations","Optimizations","Profiles","Diagnostics","Recovery & History","Settings"];
  public string[] Profiles {get;}=["Gaming","Coding","Everyday","Quiet","Battery Saver"];
+ public string[] QuickProfiles {get;}=["Gaming","Coding","Everyday"];
+ public string CpuModel=>inventory?.Cpu??"Reading processor…";
+ public string GpuModel=>inventory is null?"Reading graphics…":string.Join("; ",inventory.Graphics);
+ public double CpuLevel=>sample?.Cpu??0;
+ public double MemoryLevel=>sample?.MemoryPercent??0;
+ public double DiskUsedLevel=>sample?.DiskTotal>0?100d-(sample.DiskFree??0)*100d/sample.DiskTotal.Value:0;
+ public Command ChooseProfile {get;}
  public string[] Categories {get;}=["All","System","Gaming","Privacy","Debloat","Network","Maintenance"];
  public string[] Themes {get;}=["Dark","Light","Windows","High contrast"];
  public string[] Risks {get;}=["All risks","Low","Moderate"];
@@ -65,7 +72,7 @@ public sealed class MainViewModel : Observable, IDisposable
  public string Memory {get=>memory;set=>Set(ref memory,value);}
  public string Disk {get=>disk;set=>Set(ref disk,value);}
  public string Stamp {get=>stamp;set=>Set(ref stamp,value);}
- public string Hardware {get=>hardware;set=>Set(ref hardware,value);}
+ public string Hardware {get=>hardware;set{Set(ref hardware,value);Raise(nameof(CpuModel));Raise(nameof(GpuModel));}}
  public string Network {get=>network;set=>Set(ref network,value);}
  public string Endpoint {get=>endpoint;set=>Set(ref endpoint,value);}
  public string NetworkResult {get=>networkResult;set=>Set(ref networkResult,value);}
@@ -77,7 +84,7 @@ public sealed class MainViewModel : Observable, IDisposable
  public bool Busy {get=>busy;private set{Set(ref busy,value);RefreshCommands();Raise(nameof(CanApply));}}
  public bool CanApply=>reviewed&&!Busy&&preview.Count>0;
  public bool KeepAwake {get=>awake;set{if(SetThreadExecutionState(value?0x80000001u:0x80000000u)==0){Status="Windows rejected the keep-awake request.";return;}Set(ref awake,value);Status=value?"Keep awake for this app session. Closing releases the request.":"Normal Windows sleep behavior resumed.";}}
- private bool queueExpanded; public bool QueueExpanded {get=>queueExpanded;set=>Set(ref queueExpanded,value);} public string QueueTitle=>$"Review queue · {desired.Count} staged · {(reviewed?"fresh preview":"preview required")}";
+ private bool queueExpanded; public bool QueueExpanded {get=>queueExpanded;set=>Set(ref queueExpanded,value);} public string QueueTitle=>desired.Count==0?"Review queue · No staged changes":$"Review queue · {desired.Count} staged · {(reviewed?"ready to apply":"preview required")}";
  public string RecoverySummary=>History.Any(j=>j.IsActive)?"An active session needs undo before another batch.":"Exact undo ready · one active session at a time";
  public string ActiveProfile=>History.FirstOrDefault(j=>j.IsActive)?.Profile??"No active profile";
  public string CpuPoints=>Points(cpuTrend); public string MemoryPoints=>Points(memoryTrend);
@@ -91,6 +98,7 @@ public sealed class MainViewModel : Observable, IDisposable
   queueStore=new(Path.Combine(dataRoot,"review-queue.json"));
   Command Make(Func<object?,Task> action,Func<bool>? allowed=null){var c=new Command(action,Error,allowed);commands.Add(c);return c;}
   Navigate=Make(p=>{Page=p?.ToString()??"Overview";return Task.CompletedTask;});
+  ChooseProfile=Make(p=>{if(p is string name&&Profiles.Contains(name)){Profile=name;Page="Profiles";}return Task.CompletedTask;});
   Stage=Make(p=>{if(p is OperationItem o){Catalog.ValidateTarget(o.Id,o.Target);desired[o.Id]=o.Target;PersistQueue();}return Task.CompletedTask;},()=>!Busy);
   Preview=Make(_=>PreviewQueue(),()=>!Busy&&desired.Count>0);
   Apply=Make(_=>ApplyQueue(false),()=>CanApply);Cancel=Make(_=>{batch?.Cancel();Status="Cancellation requested. The current operation will finish before compensation.";return Task.CompletedTask;},()=>Busy&&batch!=null);
@@ -116,13 +124,13 @@ public sealed class MainViewModel : Observable, IDisposable
   await ReloadHistory();if(recoveryOnly)return;
   try{foreach(var p in queueStore.Load())desired[p.Key]=p.Value;Invalidate();}catch(Exception e){Error(e);Status+=" The saved queue was not imported.";}
   await RefreshSettings();await TickAsync();
-  try{inventory=await probe.InventoryAsync(lifetime.Token);Hardware=$"{inventory.OS}\n{inventory.Cpu} · {inventory.LogicalProcessors} logical processors · {inventory.Architecture}\nGraphics: {string.Join("; ",inventory.Graphics)}\nStorage: {string.Join("; ",inventory.Storage)}\n{inventory.PowerContext}";}catch(Exception e){Hardware="Inventory unavailable. Volatile readings remain separate.";Error(e);} if(Status=="Loading local diagnostics…")Status="Ready. Choose a profile or stage an individual setting. No changes have been applied.";
+  try{inventory=await probe.InventoryAsync(lifetime.Token);Hardware=$"{inventory.OS}\n{inventory.Cpu} · {inventory.LogicalProcessors} logical processors · {inventory.Architecture}\nGraphics: {string.Join("; ",inventory.Graphics)}\nStorage: {string.Join("; ",inventory.Storage)}\n{inventory.PowerContext}";}catch(Exception e){Hardware="Inventory unavailable. Volatile readings remain separate.";Error(e);} if(Status=="Loading local diagnostics…")Status="Ready when you are. Choose a profile or explore individual settings.";
  }
  public async Task TickAsync()
  {
   if(recoveryOnly||sampling)return;sampling=true;
-  try{sample=await probe.SampleAsync(lifetime.Token);Cpu=sample.Cpu is double c?$"{c:0}%":"Warming up";Memory=sample.MemoryPercent is double m?$"{m:0}%":"Unavailable";Disk=sample.DiskFree is long f?$"{f/1073741824d:0.0} GB":"Unavailable";Stamp=$"Sampled {sample.At.ToLocalTime():HH:mm:ss} · {sample.Status} · {sample.DurationMs} ms probe";
-   Add(cpuTrend,sample.Cpu);Add(memoryTrend,sample.MemoryPercent);Raise(nameof(CpuPoints));Raise(nameof(MemoryPoints));
+  try{sample=await probe.SampleAsync(lifetime.Token);Cpu=sample.Cpu is double c?$"{c:0}%":"Warming up";Memory=sample.MemoryPercent is double m?$"{m:0}%":"Unavailable";Disk=sample.DiskFree is long f?$"{f/1073741824d:0.0} GB":"Unavailable";Stamp=$"Updated {sample.At.ToLocalTime():HH:mm:ss} · {sample.Status}";
+   Add(cpuTrend,sample.Cpu);Add(memoryTrend,sample.MemoryPercent);Raise(nameof(CpuPoints));Raise(nameof(MemoryPoints));Raise(nameof(CpuLevel));Raise(nameof(MemoryLevel));Raise(nameof(DiskUsedLevel));
    Replace(Recommendations,RecommendationRules.Evaluate(sample.MemoryPercent,sample.DiskTotal>0?sample.DiskFree*100d/sample.DiskTotal:null,sample.OnBattery,sample.Cpu));
    if(gameJournal!=null && watchedGame!=null && !Busy){bool alive;try{using var p=Process.GetProcessById(watchedGame.Id);alive=p.StartTime.ToUniversalTime().Ticks==watchedGame.StartTicks&&!p.HasExited;}catch{alive=false;}if(!alive){var j=History.FirstOrDefault(j=>j.Id==gameJournal);gameJournal=null;if(j!=null)await Restore(j);Status="Selected game exited. "+Status;}}
   }catch(OperationCanceledException){}catch(Exception e){Stamp="Readings unavailable · last successful values may be stale";Error(e);}finally{sampling=false;}
