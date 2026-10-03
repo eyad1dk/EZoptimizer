@@ -4,4 +4,5 @@
  <ItemGroup><Compile Include="../../src/ForgePC/Domain.cs" Link="Domain.cs"/><Compile Include="../../src/ForgePC/ProfileStore.cs" Link="ProfileStore.cs"/><Compile Include="../../src/ForgePC/Updates.cs" Link="Updates.cs"/></ItemGroup>
  <ItemGroup><None Include="Fixtures/*.json" CopyToOutputDirectory="PreserveNewest"/></ItemGroup>
  <ItemGroup><PackageReference Include="System.Management" Version="10.0.12"/><Compile Include="../../src/ForgePC/SystemProbe.cs" Link="SystemProbe.cs"/><Compile Include="../../src/ForgePC/WindowsSettings.cs" Link="WindowsSettings.cs"/><Compile Include="../../src/ForgePC/LocalServices.cs" Link="LocalServices.cs"/></ItemGroup>
-</Project>
+ <ItemGroup><Compile Include="../../src/ForgePC/NativePreferences.cs" Link="NativePreferences.cs"/></ItemGroup>
+<ItemGroup><Compile Include="../../src/ForgePC/WorkloadTools.cs" Link="WorkloadTools.cs"/></ItemGroup></Project>
