@@ -1,3 +1,7 @@
+# v0.3.0 validation update
+
+51 default regression checks pass, including every native preference through simulated exact undo, integer ranges, external-change preservation, CSV calculations and malformed input, and read-only project inspection. Release build has zero warnings/errors. Native read-only inventory, readiness, profile staging and preview pass. The 84 page/theme/scale layout combinations pass. Native preference writes were not exercised on the everyday host; Windows 11 and disposable-VM mutation coverage remain open. Earlier overhead measurements below are historical and do not measure this expanded build.
+
 # Validation and compatibility
 
 ## Local evidence · 2026-10-03
