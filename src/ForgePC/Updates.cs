@@ -42,7 +42,7 @@ public sealed class UpdateService(HttpClient? client = null) : IUpdateService
   try
   {
    using var request = new HttpRequestMessage(HttpMethod.Get,"https://api.github.com/repos/eyad1dk/EZoptimizer/releases?per_page=30");
-   request.Headers.UserAgent.ParseAdd("EZoptimizer/0.2.1");
+   request.Headers.UserAgent.ParseAdd("EZoptimizer/0.3.0");
    request.Headers.Accept.ParseAdd("application/vnd.github+json");
    using var response = await http.SendAsync(request,HttpCompletionOption.ResponseHeadersRead,token);
    if (response.StatusCode is HttpStatusCode.Forbidden or HttpStatusCode.TooManyRequests)

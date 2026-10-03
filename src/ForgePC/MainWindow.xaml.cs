@@ -20,6 +20,8 @@ public sealed class NavigationTemplateSelector : DataTemplateSelector
 }
 public sealed class DesktopInteraction : IUserInteraction
 {
+ public string? ChooseWorkspace(){var picker=new OpenFolderDialog {Title="Choose coding workspace"};return picker.ShowDialog()==true?picker.FolderName:null;}
+ public async Task<string?> ReadBenchmark(){var picker=new OpenFileDialog {Filter="Frame-time CSV (*.csv)|*.csv",CheckFileExists=true};if(picker.ShowDialog()!=true)return null;using var stream=File.OpenRead(picker.FileName);if(stream.Length>8*1024*1024)throw new InvalidDataException("CSV exceeds 8 MB.");using var reader=new StreamReader(stream);return await reader.ReadToEndAsync();}
  public Task<string?> ReadProfile(){var picker=new OpenFileDialog {Filter="EZoptimizer profile (*.json)|*.json",CheckFileExists=true};if(picker.ShowDialog()!=true)return Task.FromResult<string?>(null);if(new FileInfo(picker.FileName).Length>65536)throw new InvalidDataException("Profile exceeds 64 KB.");return File.ReadAllTextAsync(picker.FileName)!;}
  public async Task WriteText(string text,string name){var picker=new SaveFileDialog {FileName=name,Filter="JSON (*.json)|*.json",AddExtension=true};if(picker.ShowDialog()==true)await File.WriteAllTextAsync(picker.FileName,text);}
  public bool Confirm(string text,string title)

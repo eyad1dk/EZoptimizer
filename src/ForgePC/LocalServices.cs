@@ -90,7 +90,7 @@ public static class ReportService
   // Explicit allowlist; network identifiers, startup/process names, journal values,
   // command lines, paths, free text workload context and imported profile names are excluded.
   return JsonSerializer.Serialize(new {
-   App="EZoptimizer",Version="0.2.1",GeneratedUtc=DateTimeOffset.UtcNow,
+   App="EZoptimizer",Version="0.3.0",GeneratedUtc=DateTimeOffset.UtcNow,
    OS=inventory?.OS,CpuModel=inventory?.Cpu,inventory?.LogicalProcessors,inventory?.Architecture,
    LatestSample=reading==null?null:new { reading.At,reading.Cpu,reading.MemoryPercent,reading.TotalMemory,reading.FreeMemory,reading.DiskTotal,reading.DiskFree,reading.OnBattery,reading.Status,reading.DurationMs },
    Recovery=history.Select(j=>new { j.Id,j.SchemaVersion,j.CreatedUtc,j.Status,Operations=j.Operations.Select(o=>new { o.Id,o.Version,o.State,o.DurationMs }) })

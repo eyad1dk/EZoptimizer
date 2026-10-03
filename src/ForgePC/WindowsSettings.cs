@@ -10,13 +10,22 @@ public sealed class WindowsSettings : ISettings
  private static extern bool GetParameter(uint action,uint parameter,out int value,uint flags);
  [DllImport("user32.dll", EntryPoint="SystemParametersInfoW", SetLastError=true)] [return:MarshalAs(UnmanagedType.Bool)]
  private static extern bool SetParameter(uint action,uint parameter,IntPtr value,uint flags);
- private static (uint Get,uint Set) Flags(string key) => key switch
- { "animations" => (0x1042,0x1043), "menus" => (0x1002,0x1003), _ => throw new ArgumentException("Unknown setting.") };
+ [StructLayout(LayoutKind.Sequential)] private struct AnimationInfo { public uint Size; public int Enabled; }
+ [DllImport("user32.dll", EntryPoint="SystemParametersInfoW", SetLastError=true)] [return:MarshalAs(UnmanagedType.Bool)]
+ private static extern bool AnimationParameter(uint action,uint parameter,ref AnimationInfo value,uint flags);
  public string Read(string key)
  {
   if (key == "power") return GuidFrom(RunPower("/getactivescheme"));
-  if (!GetParameter(Flags(key).Get,0,out var v,0)) throw new Win32Exception(Marshal.GetLastWin32Error());
-  return v == 0 ? "Off" : "On";
+  var preference=NativePreferences.Get(key); int v;
+  if(preference.Parameter==NativeParameter.AnimationStructure)
+  {
+   var info=new AnimationInfo{Size=(uint)Marshal.SizeOf<AnimationInfo>()};
+   if(!AnimationParameter(preference.Get,info.Size,ref info,0))throw new Win32Exception(Marshal.GetLastWin32Error());
+   v=info.Enabled;
+  }
+  else if(!GetParameter(preference.Get,0,out v,0))throw new Win32Exception(Marshal.GetLastWin32Error());
+  var result=preference.Numeric?v.ToString(System.Globalization.CultureInfo.InvariantCulture):v==0?"Off":"On";
+  Catalog.ValidateTarget(key,result);return result;
  }
  public void Write(string key,string value)
  {
@@ -26,7 +35,12 @@ public sealed class WindowsSettings : ISettings
    if (!Plans().Any(p => p.Id == value)) throw new InvalidOperationException("This power plan is no longer installed.");
    RunPower("/setactive",value); return;
   }
-  if (!SetParameter(Flags(key).Set,0,value == "On" ? new IntPtr(1) : IntPtr.Zero,3)) throw new Win32Exception(Marshal.GetLastWin32Error());
+  var preference=NativePreferences.Get(key); var number=preference.Numeric?NativePreferences.ParseNumber(preference,value):value=="On"?1:0;
+  bool success;
+  if(preference.Parameter==NativeParameter.AnimationStructure)
+  {var info=new AnimationInfo{Size=(uint)Marshal.SizeOf<AnimationInfo>(),Enabled=number};success=AnimationParameter(preference.Set,info.Size,ref info,3);}
+  else success=SetParameter(preference.Set,preference.Parameter==NativeParameter.UiValue?(uint)number:0,preference.Parameter==NativeParameter.PointerValue?new IntPtr(number):IntPtr.Zero,3);
+  if(!success)throw new Win32Exception(Marshal.GetLastWin32Error());
  }
  public List<PowerPlan> Plans() => RunPower("/list").Split('\n').Where(l => Regex.IsMatch(l,"[a-fA-F0-9]{8}-[a-fA-F0-9-]{27}"))
   .Select(l => new PowerPlan(GuidFrom(l),Regex.Match(l,@"\((.*)\)").Groups[1].Value)).ToList();

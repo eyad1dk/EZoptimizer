@@ -6,9 +6,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <AssemblyName>EZoptimizer</AssemblyName>
-    <ApplicationIcon>app.ico</ApplicationIcon>
-    <Version>0.2.1</Version>
+    <Version>0.3.0</Version>
     <Description>Understand your PC. Tune it for what you do.</Description>
   </PropertyGroup>
-  <ItemGroup><PackageReference Include="System.Management" Version="10.0.12"/><Resource Include="app.ico"/></ItemGroup>
+  <ItemGroup><PackageReference Include="System.Management" Version="10.0.12"/></ItemGroup>
 </Project>

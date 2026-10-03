@@ -1,4 +1,4 @@
-<Window x:Class="ForgePC.MainWindow" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:local="clr-namespace:ForgePC" xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework" Title="EZoptimizer" Icon="app.ico" Width="1280" Height="900" MinWidth="640" MinHeight="360" Background="{DynamicResource Canvas}" Foreground="{DynamicResource Ink}" FontFamily="Segoe UI Variable, Segoe UI" FontSize="13" WindowStartupLocation="CenterScreen" WindowStyle="None" ResizeMode="CanResize" UseLayoutRounding="True">
+<Window x:Class="ForgePC.MainWindow" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:local="clr-namespace:ForgePC" xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework" Title="EZoptimizer" Width="1280" Height="900" MinWidth="640" MinHeight="360" Background="{DynamicResource Canvas}" Foreground="{DynamicResource Ink}" FontFamily="Segoe UI Variable, Segoe UI" FontSize="13" WindowStartupLocation="CenterScreen" WindowStyle="None" ResizeMode="CanResize" UseLayoutRounding="True">
   <shell:WindowChrome.WindowChrome><shell:WindowChrome CaptionHeight="42" ResizeBorderThickness="6" GlassFrameThickness="0" CornerRadius="0" UseAeroCaptionButtons="False"/></shell:WindowChrome.WindowChrome>
   <Window.Resources>
     <ResourceDictionary>
@@ -182,7 +182,7 @@
               <TextBlock Text="{Binding Profile,StringFormat={}{0} · your selected profile}" Style="{StaticResource Heading}"/>
               <TextBlock Text="{Binding Profile,Converter={StaticResource Presentation},ConverterParameter=ProfileDetail}" Style="{StaticResource MutedText}"/>
               <TextBlock Text="Only installed power plans are used. You'll see the exact changes before applying." Style="{StaticResource MutedText}" FontSize="12" Margin="0,0,0,16"/>
-              <Button Content="Stage this profile  →" Command="{Binding StageProfile}" Style="{StaticResource Primary}" HorizontalAlignment="Left" Margin="0"/>
+              <CheckBox Content="Also reduce native desktop motion" IsChecked="{Binding ReduceMotion}" Margin="0,0,0,12"/><Button Content="Stage this profile  →" Command="{Binding StageProfile}" Style="{StaticResource Primary}" HorizontalAlignment="Left" Margin="0"/>
             </StackPanel>
           </Border>
           <Border Style="{StaticResource Card}">
@@ -212,6 +212,8 @@
             <Button Content="Refresh inventories" Command="{Binding RefreshDiagnostics}" Style="{StaticResource Primary}" />
             <Button Content="Review export" Command="{Binding ExportReport}" />
           </WrapPanel>
+          <Border Style="{StaticResource Card}"><StackPanel><TextBlock Text="Gaming readiness" Style="{StaticResource Heading}"/><TextBlock Text="{Binding Readiness}" Style="{StaticResource MutedText}"/><Button Content="Check display and power" Command="{Binding CheckReadiness}" HorizontalAlignment="Left"/></StackPanel></Border>
+          <Border Style="{StaticResource Card}"><StackPanel><TextBlock Text="Coding workspace" Style="{StaticResource Heading}"/><TextBlock Text="{Binding Workspace}" Style="{StaticResource MutedText}"/><Button Content="Inspect project folder" Command="{Binding ScanWorkspace}" HorizontalAlignment="Left"/></StackPanel></Border>
           <TextBlock Text="Read-only inventories. Protected processes and packages may be absent; no app is automatically marked unnecessary." Style="{StaticResource MutedText}" />
           <Expander Header="Processes · accessible working sets">
             <ListBox ItemsSource="{Binding Processes}" DisplayMemberPath="Display" Height="240" AutomationProperties.Name="Accessible processes" />
@@ -245,6 +247,10 @@
               <TextBox Text="{Binding Workload}" AutomationProperties.Name="Workload context" />
               <Button Content="Collect baseline / comparison" Command="{Binding Compare}" HorizontalAlignment="Left" />
               <TextBlock Text="{Binding Comparison}" />
+              <TextBlock Text="Game frame-time comparison" Style="{StaticResource Heading}" Margin="0,20,0,8"/>
+              <TextBlock Text="CSV: FrameTimeMs or MsBetweenPresents, one process and swap chain. 1% low is 1000 divided by the mean of the slowest 1% of frame times." Style="{StaticResource MutedText}"/>
+              <Button Content="Import baseline / comparison CSV" Command="{Binding ImportFrames}" HorizontalAlignment="Left"/>
+              <TextBlock Text="{Binding Frames}"/>
             </StackPanel>
           </Border>
         </StackPanel>
@@ -319,7 +325,7 @@
                 <Button Content="System Protection" Command="{Binding Open}" CommandParameter="protection" />
                 <Button Content="Open Windows recovery" Command="{Binding Open}" CommandParameter="restore" />
               </WrapPanel>
-              <TextBlock Text="Not a backup of personal files. The three preference controls use exact journals and do not require a restore point." Style="{StaticResource MutedText}" />
+              <TextBlock Text="Not a backup of personal files. The preference controls use exact journals and do not require a restore point." Style="{StaticResource MutedText}" />
             </StackPanel>
           </Border>
           <Border Style="{StaticResource Card}">
@@ -359,9 +365,6 @@
       <DockPanel Margin="12,24,12,16">
         <StackPanel DockPanel.Dock="Top" Margin="4,0,4,28">
           <StackPanel Orientation="Horizontal">
-            <Border Width="32" Height="32" CornerRadius="9" Background="{DynamicResource Accent}" VerticalAlignment="Center">
-              <Path Data="M 16,2 L 5,16 L 12,16 L 8,27 L 23,11 L 15,11 Z" Fill="{DynamicResource OnAccent}" Stretch="Uniform" Width="16" Height="23"/>
-            </Border>
             <StackPanel Margin="10,0,0,0" Visibility="{Binding ActualWidth,ElementName=Root,Converter={StaticResource Presentation},ConverterParameter=RailLabel}">
               <TextBlock Text="EZoptimizer" FontSize="18" LineHeight="24" FontWeight="SemiBold" Margin="0"/>
               <TextBlock Text="A little tuning. A better day." FontSize="9" Foreground="{DynamicResource Muted}" Margin="0" LineHeight="14"/>
@@ -370,7 +373,7 @@
         </StackPanel>
         <Border DockPanel.Dock="Bottom" BorderBrush="{DynamicResource Line}" BorderThickness="0,1,0,0" Padding="4,16,4,0">
           <StackPanel>
-            <TextBlock Text="v0.2.1" FontSize="10" Foreground="{DynamicResource Muted}" Margin="0"/>
+            <TextBlock Text="v0.3.0" FontSize="10" Foreground="{DynamicResource Muted}" Margin="0"/>
             <TextBlock Text="PREVIEW · LOCAL BY DESIGN" FontSize="9" Foreground="{DynamicResource Muted}" Margin="0" Visibility="{Binding ActualWidth,ElementName=Root,Converter={StaticResource Presentation},ConverterParameter=RailLabel}"/>
           </StackPanel>
         </Border>

@@ -21,7 +21,8 @@ public static class Catalog
   new("power", 1, "Installed power plan", "System", "Choose an existing Windows power plan.",
    "Higher performance plans can increase heat, noise and battery use. OEM and managed restrictions remain authoritative.",
    "https://learn.microsoft.com/en-us/windows-hardware/design/device-experiences/powercfg-command-line-options",
-   Evidence.WorkloadDependent, "Moderate · energy and heat")
+   Evidence.WorkloadDependent, "Moderate · energy and heat"),
+  .. NativePreferences.Additional
  ];
  public static OperationDefinition Get(string id) => Operations.SingleOrDefault(o => o.Id == id)
   ?? throw new InvalidDataException("Unknown operation ID.");
@@ -29,9 +30,10 @@ public static class Catalog
  {
   Get(id);
   if (id == "power") { if (!Guid.TryParseExact(value, "D", out _)) throw new InvalidDataException("Invalid power plan."); }
+  else if (NativePreferences.Get(id).Numeric) NativePreferences.ParseNumber(NativePreferences.Get(id),value);
   else if (value is not ("On" or "Off")) throw new InvalidDataException("Expected On or Off.");
  }
- public static string ValueType(string id) => id == "power" ? "Guid" : "Boolean";
+ public static string ValueType(string id) => id == "power" ? "Guid" : NativePreferences.Get(id).Numeric ? "Integer" : "Boolean";
 }
 public record Capability(bool Eligible, string Reason);
 public interface ICapabilityService { Capability Check(string id, string target); }
