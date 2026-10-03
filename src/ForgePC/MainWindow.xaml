@@ -1,69 +1,358 @@
-<Window x:Class="ForgePC.MainWindow" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" Title="EZoptimizer" Width="1180" Height="850" MinWidth="980" MinHeight="650" Background="#0B1220" FontFamily="Segoe UI" FontSize="14" WindowStartupLocation="CenterScreen">
- <Grid Background="#0B1220">
-  <Grid.ColumnDefinitions><ColumnDefinition Width="215"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-  <Border Background="#101A2C" Padding="22,30">
-   <DockPanel>
-    <StackPanel DockPanel.Dock="Top">
-     <TextBlock Text="EZ" FontSize="34" FontWeight="Bold" Foreground="#60E4C3"/>
-     <TextBlock Text="optimizer" FontSize="24" FontWeight="SemiBold" Margin="0,0,0,8"/>
-     <TextBlock Text="Make room for what matters." Foreground="{StaticResource Muted}" Margin="0,0,0,36"/>
-     <Button Content="Overview" Tag="Overview" Click="Navigate"/>
-     <Button Content="Profiles" Tag="Profiles" Click="Navigate"/>
-     <Button Content="Processes &amp; startup" Tag="Inspect" Click="Navigate"/>
-     <Button Content="Windows tools" Tag="Tools" Click="Navigate"/>
-     <Button Content="History &amp; undo" Tag="History" Click="Navigate"/>
-    </StackPanel>
-    <StackPanel VerticalAlignment="Bottom">
-     <TextBlock Text="YOUR PC. YOUR CALL." FontSize="11" Foreground="#60E4C3" Margin="0,0,0,8"/>
-     <TextBlock Text="Local. Open source.&#10;Every change explained." Foreground="{StaticResource Muted}"/>
-     <TextBlock Text="v0.1.0 · Preview" Foreground="{StaticResource Muted}" Margin="0,18,0,0"/>
-    </StackPanel>
-   </DockPanel>
-  </Border>
-  <Grid Grid.Column="1" Margin="30,26,18,20">
-   <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-   <Grid Margin="0,0,14,24"><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><StackPanel><TextBlock x:Name="PageTitle" Text="Your PC, at a glance." FontSize="28" FontWeight="SemiBold"/><TextBlock x:Name="PageSubtitle" Text="Real readings. Clear choices. No magic numbers." Foreground="{StaticResource Muted}" Margin="0,6,0,0"/></StackPanel><TextBlock Grid.Column="1" x:Name="LiveIndicator" Text="● LIVE" Foreground="#60E4C3" VerticalAlignment="Center"/></Grid>
-   <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
-    <StackPanel>
-     <StackPanel x:Name="OverviewPage">
-      <UniformGrid Columns="3">
-       <Border Style="{StaticResource Card}"><StackPanel><TextBlock Text="PROCESSOR" Foreground="{StaticResource Muted}" FontSize="11"/><TextBlock x:Name="CpuValue" Text="—" FontSize="34" Margin="0,12,0,10"/><ProgressBar x:Name="CpuBar" Height="5" Foreground="#60E4C3" Background="#28344A"/><TextBlock x:Name="CpuDetail" Foreground="{StaticResource Muted}" FontSize="12" Margin="0,14,0,0"/></StackPanel></Border>
-       <Border Style="{StaticResource Card}"><StackPanel><TextBlock Text="MEMORY" Foreground="{StaticResource Muted}" FontSize="11"/><TextBlock x:Name="RamValue" Text="—" FontSize="34" Margin="0,12,0,10"/><ProgressBar x:Name="RamBar" Height="5" Foreground="#83ABFF" Background="#28344A"/><TextBlock x:Name="RamDetail" Foreground="{StaticResource Muted}" FontSize="12" Margin="0,14,0,0"/></StackPanel></Border>
-       <Border Style="{StaticResource Card}"><StackPanel><TextBlock Text="SYSTEM DRIVE" Foreground="{StaticResource Muted}" FontSize="11"/><TextBlock x:Name="DiskValue" Text="—" FontSize="34" Margin="0,12,0,10"/><ProgressBar x:Name="DiskBar" Height="5" Foreground="#E4BB73" Background="#28344A"/><TextBlock x:Name="DiskDetail" Foreground="{StaticResource Muted}" FontSize="12" Margin="0,14,0,0"/></StackPanel></Border>
-      </UniformGrid>
-      <Border Style="{StaticResource Card}"><StackPanel><TextBlock Text="Tune for your next session." FontSize="23" FontWeight="SemiBold"/><TextBlock Text="Pick a profile, review the exact changes, then apply. Your previous settings are saved first." Foreground="{StaticResource Muted}" Margin="0,10,0,20"/><WrapPanel><Button Content="Gaming →" Tag="Gaming" Click="ChooseProfile" Background="#2E7668"/><Button Content="Coding →" Tag="Coding" Click="ChooseProfile"/><Button Content="Everyday →" Tag="Everyday" Click="ChooseProfile"/><Button Content="Quiet →" Tag="Quiet" Click="ChooseProfile"/></WrapPanel></StackPanel></Border>
-      <Border Style="{StaticResource Card}"><StackPanel><TextBlock Text="What deserves your attention?" FontSize="19"/><TextBlock x:Name="Advice" Foreground="{StaticResource Muted}" Margin="0,12,0,0"/></StackPanel></Border>
-      <Border Style="{StaticResource Card}"><StackPanel><TextBlock Text="Keep a long build awake." FontSize="19"/><TextBlock Text="Temporarily prevent idle sleep while EZoptimizer is open. The screen can still turn off. Closing the app releases the request." Foreground="{StaticResource Muted}" Margin="0,10,0,8"/><CheckBox x:Name="Awake" Content="Keep this PC awake for my session" Click="ToggleAwake"/></StackPanel></Border>
-     </StackPanel>
-     <StackPanel x:Name="ProfilesPage" Visibility="Collapsed">
-      <WrapPanel><Button Content="Gaming" Tag="Gaming" Click="ChooseProfile"/><Button Content="Coding" Tag="Coding" Click="ChooseProfile"/><Button Content="Everyday" Tag="Everyday" Click="ChooseProfile"/><Button Content="Quiet" Tag="Quiet" Click="ChooseProfile"/></WrapPanel>
-      <Border Style="{StaticResource Card}"><StackPanel><TextBlock x:Name="ProfileName" FontSize="24" FontWeight="SemiBold"/><TextBlock x:Name="ProfileDescription" Foreground="{StaticResource Muted}" Margin="0,10,0,18"/>
-       <TextBlock Text="POWER PLAN" Foreground="{StaticResource Muted}" FontSize="11"/><ComboBox x:Name="PlanPicker" Margin="0,8,0,8" Padding="10" AutomationProperties.Name="Power plan"/>
-       <TextBlock Text="Only plans already installed on this PC appear here. High performance can increase heat, fan noise and battery use; it may not improve your workload." Foreground="{StaticResource Muted}" FontSize="12" Margin="0,0,0,12"/>
-       <CheckBox x:Name="Animations" Content="Enable animations inside Windows apps"/>
-       <CheckBox x:Name="Menus" Content="Enable Windows menu animations"/>
-       <TextBlock Text="Animation changes affect how Windows feels. They are not an FPS boost. Apps can choose whether to follow these preferences." Foreground="{StaticResource Muted}" FontSize="12" Margin="0,10,0,18"/>
-       <Button Content="Preview changes" Click="PreviewChanges" HorizontalAlignment="Left" Background="#2E7668"/>
-      </StackPanel></Border>
-      <Border Style="{StaticResource Card}"><StackPanel><TextBlock Text="Review before applying" FontSize="20"/><TextBlock x:Name="PreviewText" Text="Your current settings are untouched. Choose your options and preview them." Foreground="{StaticResource Muted}" Margin="0,14,0,18"/><Button x:Name="ApplyButton" Content="Apply reviewed changes" Click="ApplyChanges" IsEnabled="False" HorizontalAlignment="Left" Background="#2E7668"/></StackPanel></Border>
-     </StackPanel>
-     <StackPanel x:Name="InspectPage" Visibility="Collapsed">
-      <WrapPanel><Button Content="Refresh lists" Click="RefreshLists"/><Button Content="Manage startup in Windows" Tag="ms-settings:startupapps" Click="OpenTool"/></WrapPanel>
-      <Border Style="{StaticResource Card}"><StackPanel><TextBlock Text="Largest processes by memory" FontSize="20"/><TextBlock Text="Working set, refreshed on request. Windows shares some memory between processes, so these values should not be added together." Foreground="{StaticResource Muted}" Margin="0,8,0,16"/><TextBlock x:Name="ProcessList" FontFamily="Consolas" FontSize="13"/></StackPanel></Border>
-      <Border Style="{StaticResource Card}"><StackPanel><TextBlock Text="Startup entries" FontSize="20"/><TextBlock Text="Run keys and startup folders. This is a partial inventory; Windows Settings also includes packaged apps and enable/disable controls." Foreground="{StaticResource Muted}" Margin="0,8,0,16"/><TextBlock x:Name="StartupList" FontSize="13"/></StackPanel></Border>
-     </StackPanel>
-     <StackPanel x:Name="ToolsPage" Visibility="Collapsed">
-      <Border Style="{StaticResource Card}"><StackPanel><TextBlock Text="Gaming setup" FontSize="20"/><TextBlock Text="Review Game Mode, background recording and per-app graphics preferences using Windows' own controls." Foreground="{StaticResource Muted}" Margin="0,8,0,16"/><WrapPanel><Button Content="Game Mode" Tag="ms-settings:gaming-gamemode" Click="OpenTool"/><Button Content="Captures" Tag="ms-settings:gaming-gamedvr" Click="OpenTool"/><Button Content="Graphics settings" Tag="ms-settings:display-advancedgraphics" Click="OpenTool"/></WrapPanel></StackPanel></Border>
-      <Border Style="{StaticResource Card}"><StackPanel><TextBlock Text="Space &amp; maintenance" FontSize="20"/><TextBlock Text="Review files in Windows before deleting them. Keep your updates and protection current." Foreground="{StaticResource Muted}" Margin="0,8,0,16"/><WrapPanel><Button Content="Storage cleanup" Tag="ms-settings:storagesense" Click="OpenTool"/><Button Content="Windows Update" Tag="ms-settings:windowsupdate" Click="OpenTool"/><Button Content="Windows Security" Tag="windowsdefender:" Click="OpenTool"/></WrapPanel></StackPanel></Border>
-      <Border Style="{StaticResource Card}"><StackPanel><TextBlock Text="Development &amp; everyday work" FontSize="20"/><TextBlock Text="Control notifications, review installed tools, and choose when your PC sleeps." Foreground="{StaticResource Muted}" Margin="0,8,0,16"/><WrapPanel><Button Content="Notifications" Tag="ms-settings:notifications" Click="OpenTool"/><Button Content="Installed apps" Tag="ms-settings:appsfeatures" Click="OpenTool"/><Button Content="Power &amp; sleep" Tag="ms-settings:powersleep" Click="OpenTool"/></WrapPanel></StackPanel></Border>
-      <Border Style="{StaticResource Card}"><StackPanel><TextBlock Text="Export a system report" FontSize="20"/><TextBlock Text="Includes CPU model, memory, disk capacity, OS version and current tuning settings. No usernames, file paths or process names. Review before sharing." Foreground="{StaticResource Muted}" Margin="0,8,0,16"/><Button Content="Save report…" Click="ExportReport" HorizontalAlignment="Left"/></StackPanel></Border>
-     </StackPanel>
-     <StackPanel x:Name="HistoryPage" Visibility="Collapsed">
-      <Border Style="{StaticResource Card}"><StackPanel><TextBlock Text="Your way back." FontSize="23"/><TextBlock Text="Undo restores the values saved before your last session. If a setting has since changed elsewhere, EZoptimizer leaves it alone and tells you what to review. Undo the current session before applying another." Foreground="{StaticResource Muted}" Margin="0,12,0,20"/><Button Content="Undo session" Click="Undo" HorizontalAlignment="Left" Background="#2E7668"/><TextBlock x:Name="HistoryText" Margin="0,14,0,0" Foreground="{StaticResource Muted}"/></StackPanel></Border>
-     </StackPanel>
-    </StackPanel>
-   </ScrollViewer>
-   <Border Grid.Row="2" Background="#101A2C" CornerRadius="8" Padding="14,10" Margin="0,10,14,0"><TextBlock x:Name="Status" Text="Ready. Choose a profile to get started." Foreground="{StaticResource Muted}"/></Border>
+<Window x:Class="ForgePC.MainWindow" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" Title="EZoptimizer" Width="1180" Height="840" MinWidth="640" MinHeight="360" Background="{DynamicResource Canvas}" Foreground="{DynamicResource Ink}" FontFamily="Segoe UI Variable, Segoe UI" FontSize="14" WindowStartupLocation="CenterScreen">
+  <Window.Resources>
+    <ResourceDictionary>
+      <local:NavigationTemplateSelector x:Key="NavigationTemplate" xmlns:local="clr-namespace:ForgePC" />
+      <DataTemplate x:Key="Page-Overview">
+        <StackPanel Tag="Page-Overview" DataContext="{Binding DataContext,RelativeSource={RelativeSource AncestorType=Window}}">
+          <TextBlock Text="Your PC, with the details that matter." Style="{StaticResource MutedText}" />
+          <TextBlock Text="{Binding Stamp}" Style="{StaticResource MutedText}" FontSize="12" />
+          <WrapPanel>
+            <Border Style="{StaticResource Card}" Width="224" Margin="0,0,16,16">
+              <StackPanel>
+                <TextBlock Text="CPU · sampled utilization" Style="{StaticResource MutedText}" />
+                <TextBlock Text="{Binding Cpu}" FontSize="32" FontWeight="SemiBold" />
+                <Polyline Points="{Binding CpuPoints}" Stroke="{DynamicResource Accent}" StrokeThickness="2" Height="44" Width="200" Stretch="None" />
+              </StackPanel>
+            </Border>
+            <Border Style="{StaticResource Card}" Width="224" Margin="0,0,16,16">
+              <StackPanel>
+                <TextBlock Text="Physical memory · in use" Style="{StaticResource MutedText}" />
+                <TextBlock Text="{Binding Memory}" FontSize="32" FontWeight="SemiBold" />
+                <Polyline Points="{Binding MemoryPoints}" Stroke="{DynamicResource Accent}" StrokeThickness="2" Height="44" Width="200" Stretch="None" />
+              </StackPanel>
+            </Border>
+            <Border Style="{StaticResource Card}" Width="224">
+              <StackPanel>
+                <TextBlock Text="System drive · free" Style="{StaticResource MutedText}" />
+                <TextBlock Text="{Binding Disk}" FontSize="32" FontWeight="SemiBold" />
+                <TextBlock Text="Windows-managed cleanup" Style="{StaticResource MutedText}" />
+              </StackPanel>
+            </Border>
+          </WrapPanel>
+          <Border Style="{StaticResource Card}">
+            <StackPanel>
+              <TextBlock Text="Recovery comes first" Style="{StaticResource Heading}" />
+              <TextBlock Text="{Binding RecoverySummary}" />
+              <TextBlock>
+                <Run Text="Active profile: " />
+                <Run Text="{Binding ActiveProfile,Mode=OneWay}" />
+              </TextBlock>
+              <WrapPanel>
+                <Button Content="Review profiles" Command="{Binding Navigate}" CommandParameter="Profiles" Style="{StaticResource Primary}" />
+                <Button Content="Open recovery" Command="{Binding Navigate}" CommandParameter="Recovery &amp; History" />
+              </WrapPanel>
+            </StackPanel>
+          </Border>
+          <Border Style="{StaticResource Card}">
+            <StackPanel>
+              <TextBlock Text="Hardware at a glance" Style="{StaticResource Heading}" />
+              <TextBlock Text="{Binding Hardware}" Style="{StaticResource MutedText}" />
+            </StackPanel>
+          </Border>
+          <Button HorizontalAlignment="Left" Content="See explained recommendations" Command="{Binding Navigate}" CommandParameter="Recommendations" />
+        </StackPanel>
+      </DataTemplate>
+      <DataTemplate x:Key="Page-Recommendations">
+        <StackPanel Tag="Page-Recommendations" DataContext="{Binding DataContext,RelativeSource={RelativeSource AncestorType=Window}}">
+          <TextBlock Text="Recommendations explain their evidence. No score or guaranteed gain." Style="{StaticResource MutedText}" />
+          <ItemsControl ItemsSource="{Binding Recommendations}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate>
+                <Border Style="{StaticResource Card}">
+                  <StackPanel>
+                    <TextBlock Text="{Binding Title}" Style="{StaticResource Heading}" />
+                    <TextBlock Text="{Binding Detected}" Foreground="{DynamicResource Accent}" />
+                    <TextBlock Text="{Binding Reason}" />
+                    <TextBlock Text="{Binding Measurement}" Style="{StaticResource MutedText}" />
+                    <TextBlock Text="{Binding Evidence}" FontSize="12" />
+                    <Button Content="{Binding Action}" Command="{Binding DataContext.Open,RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding Destination}" HorizontalAlignment="Left" />
+                  </StackPanel>
+                </Border>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+      </DataTemplate>
+      <DataTemplate x:Key="Page-Optimizations">
+        <StackPanel Tag="Page-Optimizations" DataContext="{Binding DataContext,RelativeSource={RelativeSource AncestorType=Window}}">
+          <TextBlock Text="Pick a setting, stage it, then preview. Shortcuts open Windows without changing anything here." Style="{StaticResource MutedText}" />
+          <TextBox Text="{Binding Search,UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Search optimizations" />
+          <WrapPanel>
+            <ComboBox Width="150" ItemsSource="{Binding Categories}" SelectedItem="{Binding Category}" AutomationProperties.Name="Category filter" />
+            <ComboBox Width="170" ItemsSource="{Binding ApplicabilityOptions}" SelectedItem="{Binding Applicability}" AutomationProperties.Name="Compatibility filter" />
+            <ComboBox Width="132" ItemsSource="{Binding Risks}" SelectedItem="{Binding Risk}" AutomationProperties.Name="Risk filter" />
+            <ComboBox Width="150" ItemsSource="{Binding StateOptions}" SelectedItem="{Binding CurrentState}" AutomationProperties.Name="Current value filter" />
+            <ComboBox Width="170" ItemsSource="{Binding RestartOptions}" SelectedItem="{Binding Restart}" AutomationProperties.Name="Restart filter" />
+          </WrapPanel>
+          <ItemsControl ItemsSource="{Binding FilteredOperations}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate>
+                <Border Style="{StaticResource Card}">
+                  <StackPanel>
+                    <TextBlock Text="{Binding Title}" Style="{StaticResource Heading}" />
+                    <TextBlock Text="{Binding Meta}" Style="{StaticResource MutedText}" FontSize="12" />
+                    <TextBlock Text="{Binding Purpose}" />
+                    <TextBlock>
+                      <Run Text="Current: " />
+                      <Run Text="{Binding Current,Mode=OneWay}" />
+                    </TextBlock>
+                    <TextBlock Text="{Binding Compatibility}" Style="{StaticResource MutedText}" />
+                    <WrapPanel>
+                      <ComboBox MinWidth="160" MaxWidth="320" ItemsSource="{Binding Choices}" DisplayMemberPath="Label" SelectedValuePath="Value" SelectedValue="{Binding Target}" AutomationProperties.Name="Proposed value" />
+                      <Button Content="Stage change" Command="{Binding DataContext.Stage,RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}" />
+                    </WrapPanel>
+                    <Expander Header="Evidence, tradeoffs and exact undo">
+                      <StackPanel>
+                        <TextBlock Text="{Binding Tradeoff}" />
+                        <TextBlock>
+                          <Run Text="Evidence: " />
+                          <Run Text="{Binding Evidence,Mode=OneWay}" />
+                          <Run Text=" · Recovery: " />
+                          <Run Text="{Binding Recovery,Mode=OneWay}" />
+                        </TextBlock>
+                        <Button Content="Windows documentation" Command="{Binding DataContext.Open,RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding Definition.Documentation}" HorizontalAlignment="Left" />
+                      </StackPanel>
+                    </Expander>
+                  </StackPanel>
+                </Border>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+          <TextBlock Text="Windows controls and guidance" Style="{StaticResource Heading}" />
+          <ItemsControl ItemsSource="{Binding Guides}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate>
+                <Border Style="{StaticResource Card}">
+                  <StackPanel>
+                    <TextBlock Text="{Binding Title}" Style="{StaticResource Heading}" />
+                    <TextBlock Text="{Binding Type}" Foreground="{DynamicResource Accent}" FontSize="12" />
+                    <TextBlock Text="{Binding Description}" />
+                    <Button Content="{Binding Action}" Command="{Binding DataContext.Open,RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding Url}" HorizontalAlignment="Left" />
+                  </StackPanel>
+                </Border>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+      </DataTemplate>
+      <DataTemplate x:Key="Page-Profiles">
+        <StackPanel Tag="Page-Profiles" DataContext="{Binding DataContext,RelativeSource={RelativeSource AncestorType=Window}}">
+          <TextBlock Text="A starting point for your workflow. Presets do not promise FPS or faster builds." Style="{StaticResource MutedText}" />
+          <Border Style="{StaticResource Card}">
+            <StackPanel>
+              <TextBlock Text="Conservative presets" Style="{StaticResource Heading}" />
+              <ComboBox ItemsSource="{Binding Profiles}" SelectedItem="{Binding Profile}" AutomationProperties.Name="Workload profile" />
+              <TextBlock Text="Gaming / Coding: reduced animations and Balanced. Everyday: animations on and Balanced. Quiet / Battery Saver: reduced animations and installed Power saver. Missing plans are skipped." />
+              <Button Content="Stage profile for review" Command="{Binding StageProfile}" Style="{StaticResource Primary}" HorizontalAlignment="Left" />
+            </StackPanel>
+          </Border>
+          <Border Style="{StaticResource Card}">
+            <StackPanel>
+              <TextBlock Text="Your own profile" Style="{StaticResource Heading}" />
+              <TextBlock Text="Stage individual settings in Optimizations, then export that desired configuration. Imports contain allowlisted values only. Originals come from this PC during preview." />
+              <WrapPanel>
+                <Button Content="Import profile" Command="{Binding Import}" />
+                <Button Content="Export staged profile" Command="{Binding Export}" />
+              </WrapPanel>
+            </StackPanel>
+          </Border>
+          <Border Style="{StaticResource Card}">
+            <StackPanel>
+              <TextBlock Text="Opt-in game session" Style="{StaticResource Heading}" />
+              <TextBlock Text="Select an already running game from Diagnostics. Stage and preview a profile. Exact undo runs on game exit or normal app exit. A crash leaves its journal for recovery. No injection, launch or forced closure." />
+              <ComboBox ItemsSource="{Binding Processes}" SelectedItem="{Binding SelectedGame}" DisplayMemberPath="Display" AutomationProperties.Name="Selected running game" />
+              <Button Content="Start reviewed game session" Command="{Binding StartGame}" HorizontalAlignment="Left" />
+            </StackPanel>
+          </Border>
+        </StackPanel>
+      </DataTemplate>
+      <DataTemplate x:Key="Page-Diagnostics">
+        <StackPanel Tag="Page-Diagnostics" DataContext="{Binding DataContext,RelativeSource={RelativeSource AncestorType=Window}}">
+          <WrapPanel>
+            <Button Content="Refresh inventories" Command="{Binding RefreshDiagnostics}" Style="{StaticResource Primary}" />
+            <Button Content="Review export" Command="{Binding ExportReport}" />
+          </WrapPanel>
+          <TextBlock Text="Read-only inventories. Protected processes and packages may be absent; no app is automatically marked unnecessary." Style="{StaticResource MutedText}" />
+          <Expander Header="Processes · accessible working sets">
+            <ListBox ItemsSource="{Binding Processes}" DisplayMemberPath="Display" Height="240" AutomationProperties.Name="Accessible processes" />
+          </Expander>
+          <Expander Header="Startup · Run keys and startup folders">
+            <StackPanel>
+              <ListBox ItemsSource="{Binding Startup}" Height="200" AutomationProperties.Name="Partial startup inventory" />
+              <Button Content="Manage startup in Windows" Command="{Binding Open}" CommandParameter="ms-settings:startupapps" />
+            </StackPanel>
+          </Expander>
+          <Expander Header="Registered applications · user and machine scopes">
+            <StackPanel>
+              <ListBox ItemsSource="{Binding Apps}" DisplayMemberPath="Display" Height="240" AutomationProperties.Name="Registered applications" />
+              <TextBlock Text="Partial uninstall-registry inventory. Framework/provisioned-package classification and removal are deferred. Windows provides the item-specific uninstall workflow; user data may be lost." />
+              <Button Content="Open Windows installed apps" Command="{Binding Open}" CommandParameter="ms-settings:appsfeatures" />
+            </StackPanel>
+          </Expander>
+          <Border Style="{StaticResource Card}">
+            <StackPanel>
+              <TextBlock Text="Network · adapters and configured DNS" Style="{StaticResource Heading}" />
+              <TextBlock Text="{Binding Network}" Style="{StaticResource MutedText}" />
+              <TextBlock Text="Endpoint hostname or IP · five ICMP requests only when you click" />
+              <TextBox Text="{Binding Endpoint,UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Endpoint hostname or IP" />
+              <Button Content="Measure selected endpoint" Command="{Binding MeasureNetwork}" HorizontalAlignment="Left" />
+              <TextBlock Text="{Binding NetworkResult}" />
+            </StackPanel>
+          </Border>
+          <Border Style="{StaticResource Card}">
+            <StackPanel>
+              <TextBlock Text="Before / after · repeatable workload" Style="{StaticResource Heading}" />
+              <TextBox Text="{Binding Workload}" AutomationProperties.Name="Workload context" />
+              <Button Content="Collect baseline / comparison" Command="{Binding Compare}" HorizontalAlignment="Left" />
+              <TextBlock Text="{Binding Comparison}" />
+            </StackPanel>
+          </Border>
+        </StackPanel>
+      </DataTemplate>
+      <DataTemplate x:Key="Page-Recovery &amp; History">
+        <StackPanel Tag="Page-Recovery &amp; History" DataContext="{Binding DataContext,RelativeSource={RelativeSource AncestorType=Window}}">
+          <TextBlock Text="{Binding RecoverySummary}" Style="{StaticResource MutedText}" />
+          <TextBlock Text="Undo preserves values changed outside EZoptimizer. Conflicts remain available for review and retry; there is no force-default reset." />
+          <ItemsControl ItemsSource="{Binding History}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate>
+                <Border Style="{StaticResource Card}">
+                  <StackPanel>
+                    <TextBlock Text="{Binding Profile}" Style="{StaticResource Heading}" />
+                    <TextBlock>
+                      <Run Text="{Binding CreatedUtc,Mode=OneWay}" />
+                      <Run Text=" · " />
+                      <Run Text="{Binding Status,Mode=OneWay}" />
+                    </TextBlock>
+                    <TextBlock Text="{Binding Id}" Style="{StaticResource MutedText}" FontSize="11" />
+                    <Expander Header="Operation results">
+                      <ItemsControl ItemsSource="{Binding Operations}">
+                        <ItemsControl.ItemTemplate>
+                          <DataTemplate>
+                            <StackPanel Margin="8">
+                              <TextBlock>
+                                <Run Text="{Binding Id,Mode=OneWay}" />
+                                <Run Text=" · " />
+                                <Run Text="{Binding State,Mode=OneWay}" />
+                              </TextBlock>
+                              <TextBlock>
+                                <Run Text="{Binding Before,Mode=OneWay}" />
+                                <Run Text=" → " />
+                                <Run Text="{Binding Target,Mode=OneWay}" />
+                              </TextBlock>
+                              <TextBlock Text="{Binding Result}" Style="{StaticResource MutedText}" />
+                            </StackPanel>
+                          </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                      </ItemsControl>
+                    </Expander>
+                    <Button Content="Undo / retry exact restoration" Command="{Binding DataContext.Undo,RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}" HorizontalAlignment="Left" />
+                  </StackPanel>
+                </Border>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+          <TextBlock Text="No saved cards means empty history. Malformed records are quarantined while valid journals remain recoverable. Launch EZoptimizer.exe --recovery to skip dashboard probes." />
+        </StackPanel>
+      </DataTemplate>
+      <DataTemplate x:Key="Page-Settings">
+        <StackPanel Tag="Page-Settings" DataContext="{Binding DataContext,RelativeSource={RelativeSource AncestorType=Window}}">
+          <Border Style="{StaticResource Card}">
+            <StackPanel>
+              <TextBlock Text="Appearance and session" Style="{StaticResource Heading}" />
+              <ComboBox ItemsSource="{Binding Themes}" SelectedItem="{Binding Theme}" AutomationProperties.Name="Color theme" />
+              <TextBlock Text="Windows high contrast takes precedence. No interface animations. Windows DPI scaling is supported; all pages scroll at small sizes." />
+              <CheckBox Content="Keep this PC awake while EZoptimizer is open" IsChecked="{Binding KeepAwake}" />
+            </StackPanel>
+          </Border>
+          <Border Style="{StaticResource Card}">
+            <StackPanel>
+              <TextBlock Text="System Restore · supplementary" Style="{StaticResource Heading}" />
+              <TextBlock Text="{Binding RestoreStatus}" />
+              <WrapPanel>
+                <Button Content="Inspect availability" Command="{Binding InspectRestore}" />
+                <Button Content="Review restore-point creation" Command="{Binding CreateRestore}" />
+                <Button Content="System Protection" Command="{Binding Open}" CommandParameter="protection" />
+                <Button Content="Open Windows recovery" Command="{Binding Open}" CommandParameter="restore" />
+              </WrapPanel>
+              <TextBlock Text="Not a backup of personal files. The three preference controls use exact journals and do not require a restore point." Style="{StaticResource MutedText}" />
+            </StackPanel>
+          </Border>
+          <Border Style="{StaticResource Card}">
+            <StackPanel>
+              <TextBlock Text="Updates · official releases" Style="{StaticResource Heading}" />
+              <CheckBox Content="Include preview releases" IsChecked="{Binding PreviewChannel}" />
+              <WrapPanel>
+                <Button Content="Check for updates" Command="{Binding CheckUpdate}" />
+                <Button Content="Open official release page" Command="{Binding Open}" CommandParameter="https://github.com/eyad1dk/EZoptimizer/releases" />
+              </WrapPanel>
+              <TextBlock Text="{Binding UpdateStatus}" />
+              <TextBlock Text="Installation remains manual until publisher signing exists. A neighboring checksum checks integrity, not publisher identity. This preview is unsigned." Style="{StaticResource MutedText}" />
+            </StackPanel>
+          </Border>
+          <TextBlock Text="No telemetry, account, background service or automatic uploads. Logs stay local with redacted operation results. Review reports before saving." />
+        </StackPanel>
+      </DataTemplate>
+    </ResourceDictionary>
+  </Window.Resources>
+  <Grid x:Name="Root" Background="{DynamicResource Canvas}">
+    <Grid.ColumnDefinitions>
+      <ColumnDefinition Width="176" />
+      <ColumnDefinition Width="*" />
+    </Grid.ColumnDefinitions>
+    <Border Background="{DynamicResource Surface}" BorderBrush="{DynamicResource Line}" BorderThickness="0,0,1,0">
+      <DockPanel Margin="16,24,12,16">
+        <StackPanel DockPanel.Dock="Top">
+          <TextBlock Text="EZoptimizer" FontSize="20" FontWeight="Bold" />
+          <TextBlock Text="MAKE IT YOURS" Foreground="{DynamicResource Accent}" FontSize="10" Margin="0,0,0,24" />
+        </StackPanel>
+        <TextBlock DockPanel.Dock="Bottom" Text="v0.2 preview&#xA;Local. Reviewed. Reversible." Style="{StaticResource MutedText}" FontSize="11" />
+        <ListBox ItemsSource="{Binding Pages}" SelectedItem="{Binding Page}" AutomationProperties.Name="Navigation" />
+      </DockPanel>
+    </Border>
+    <DockPanel Grid.Column="1" Margin="24,20,24,16">
+      <Border MaxHeight="216" DockPanel.Dock="Bottom" BorderBrush="{DynamicResource Line}" BorderThickness="0,1,0,0" Padding="0,12,0,0">
+        <ScrollViewer VerticalScrollBarVisibility="Auto">
+          <StackPanel>
+            <TextBlock x:Name="OperationStatus" Text="{Binding Status}" AutomationProperties.Name="Operation status" AutomationProperties.LiveSetting="Polite" Style="{StaticResource MutedText}" />
+            <Expander IsExpanded="{Binding QueueExpanded}" Header="{Binding QueueTitle}" AutomationProperties.Name="Persistent review queue">
+              <StackPanel>
+                <ScrollViewer MaxHeight="96">
+                  <ItemsControl ItemsSource="{Binding Review}">
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate>
+                        <Border Padding="8" Background="{DynamicResource Surface}" Margin="0,0,0,4">
+                          <StackPanel>
+                            <TextBlock Text="{Binding Title}" FontWeight="SemiBold" />
+                            <TextBlock>
+                              <Run Text="{Binding Before,Mode=OneWay}" />
+                              <Run Text=" → " />
+                              <Run Text="{Binding After,Mode=OneWay}" />
+                            </TextBlock>
+                            <TextBlock Text="{Binding Contract}" Style="{StaticResource MutedText}" FontSize="12" />
+                          </StackPanel>
+                        </Border>
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                </ScrollViewer>
+                <WrapPanel>
+                  <Button Content="Preview exact changes" Command="{Binding Preview}" />
+                  <Button Content="Apply reviewed changes" Command="{Binding Apply}" Style="{StaticResource Primary}" />
+                  <Button Content="Cancel batch" Command="{Binding Cancel}" />
+                  <Button Content="Clear queue" Command="{Binding Clear}" />
+                </WrapPanel>
+              </StackPanel>
+            </Expander>
+          </StackPanel>
+        </ScrollViewer>
+      </Border>
+      <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel>
+          <TextBlock Text="{Binding Page}" Style="{StaticResource Title}" />
+          <ContentControl Content="{Binding Page}" ContentTemplateSelector="{StaticResource NavigationTemplate}" />
+        </StackPanel>
+      </ScrollViewer>
+    </DockPanel>
   </Grid>
- </Grid>
 </Window>

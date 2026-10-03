@@ -1,12 +1,13 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net8.0-windows</TargetFramework>
+    <TargetFramework>net10.0-windows</TargetFramework>
     <UseWPF>true</UseWPF>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <AssemblyName>EZoptimizer</AssemblyName>
-    <Version>0.1.0</Version>
+    <Version>0.2.0</Version>
     <Description>Understand your PC. Tune it for what you do.</Description>
   </PropertyGroup>
+  <ItemGroup><PackageReference Include="System.Management" Version="10.0.12"/></ItemGroup>
 </Project>

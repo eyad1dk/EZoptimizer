@@ -8,119 +8,230 @@ namespace ForgePC;
 
 public record Change(string Key, string Label, string Before, string After);
 public record PowerPlan(string Id, string Name) { public override string ToString() => Name; }
+public sealed class OperationRecord
+{
+ public string Id { get; set; } = "";
+ public int Version { get; set; } = 1;
+ public string ValueType { get; set; } = "";
+ public string Before { get; set; } = "";
+ public string Target { get; set; } = "";
+ public string State { get; set; } = "prepared";
+ public string Result { get; set; } = "";
+ public long DurationMs { get; set; }
+}
 public sealed class Journal
 {
+ public int SchemaVersion { get; set; } = 2;
  public string Id { get; set; } = Guid.NewGuid().ToString("N");
  public DateTime CreatedUtc { get; set; } = DateTime.UtcNow;
  public string Profile { get; set; } = "";
- public string Status { get; set; } = "pending";
+ public string Status { get; set; } = "prepared";
  public List<Change> Changes { get; set; } = [];
  public List<string> Restored { get; set; } = [];
+ public List<OperationRecord> Operations { get; set; } = [];
+ public string RecoveryContract { get; set; } = "Exact per-setting undo; no system restore point required";
+ public bool IsActive => Status != "restored";
 }
 public interface ISettings { string Read(string key); void Write(string key, string value); }
-
-public sealed class TuningEngine(ISettings settings, string directory)
+public interface IJournalStore
+{
+ IReadOnlyList<string> Warnings { get; }
+ bool HasQuarantinedHistory { get; }
+ List<Journal> Load();
+ void Save(Journal journal);
+}
+public sealed class JournalStore(string directory) : IJournalStore
 {
  private static readonly JsonSerializerOptions Json = new() { WriteIndented = true };
- public List<Journal> History()
+ private readonly List<string> warnings = [];
+ public IReadOnlyList<string> Warnings => warnings;
+ public bool HasQuarantinedHistory => warnings.Count > 0 || (Directory.Exists(Path.Combine(directory, "quarantine")) &&
+  Directory.EnumerateFiles(Path.Combine(directory, "quarantine")).Any());
+ public static void Validate(Journal j)
  {
-  Directory.CreateDirectory(directory);
-  return Directory.GetFiles(directory, "*.json").Select(p => JsonSerializer.Deserialize<Journal>(File.ReadAllText(p)) ?? throw new InvalidDataException("Invalid history file."))
-   .OrderByDescending(x => x.CreatedUtc).ToList();
+  if (!Guid.TryParseExact(j.Id, "N", out _) || j.SchemaVersion != 2) throw new InvalidDataException("Invalid journal identity or schema.");
+  if (j.Changes == null || j.Restored == null || j.Operations == null || j.Changes.Count > 32 ||
+   j.Operations.Count != j.Changes.Count || j.Profile==null || j.Profile.Length > 120 || j.Changes.Select(c => c.Key).Distinct().Count() != j.Changes.Count || j.Restored.Distinct().Count()!=j.Restored.Count)
+   throw new InvalidDataException("Invalid journal structure.");
+  foreach (var c in j.Changes) { Catalog.ValidateTarget(c.Key, c.Before); Catalog.ValidateTarget(c.Key, c.After); }
+  if (j.Restored.Any(id => !j.Changes.Any(c => c.Key == id))) throw new InvalidDataException("Invalid restored operation.");
+  for (var i = 0; i < j.Operations.Count; i++)
+  {
+   var operation = j.Operations[i]; var change = j.Changes[i];
+   if (operation.Id != change.Key || operation.Before != change.Before || operation.Target != change.After ||
+    operation.Version != Catalog.Get(operation.Id).Version || operation.ValueType != Catalog.ValueType(operation.Id) ||
+    operation.State is not ("prepared" or "applying" or "applied" or "failed" or "rolling back" or "rolled back" or "conflict"))
+    throw new InvalidDataException("Invalid operation state.");
+   if(j.Restored.Contains(operation.Id)!=(operation.State=="rolled back") || j.Status=="restored" && operation.State!="rolled back")throw new InvalidDataException("Inconsistent restored state.");
+  }
+  if (j.Status is not ("pending" or "prepared" or "applying" or "applied" or "interrupted" or "restore incomplete" or "rolling back" or "restored"))
+   throw new InvalidDataException("Invalid session state.");
  }
- private void Save(Journal journal)
+ public static Journal Parse(string json)
+ {
+  using var document = JsonDocument.Parse(json);
+  var j = JsonSerializer.Deserialize<Journal>(json) ?? throw new InvalidDataException("Empty journal.");
+  if (!document.RootElement.TryGetProperty("SchemaVersion", out var version) || version.GetInt32() == 1)
+  {
+   j.SchemaVersion = 2;
+   j.Operations = j.Changes.Select(c => new OperationRecord {
+    Id = c.Key, ValueType = Catalog.ValueType(c.Key), Before = c.Before, Target = c.After,
+    State = j.Restored.Contains(c.Key) || j.Status == "restored" ? "rolled back" : j.Status == "applied" ? "applied" : "applying"
+   }).ToList();
+   if (j.Status == "restored") j.Restored = j.Changes.Select(c => c.Key).ToList();
+  }
+  Validate(j); return j;
+ }
+ private void EnsureDirectory()
  {
   Directory.CreateDirectory(directory);
+  if ((File.GetAttributes(directory) & FileAttributes.ReparsePoint) != 0) throw new IOException("Recovery directory cannot be a reparse point.");
+ }
+ public List<Journal> Load()
+ {
+  EnsureDirectory(); warnings.Clear(); var result = new List<Journal>();
+  // Atomic saves retain the last completed JSON. Orphaned temporary writes are never
+  // replayed: Windows is touched only after a successful rename of original state.
+  foreach (var path in Directory.GetFiles(directory, "*.json"))
+  {
+   try
+   {
+    var file = new FileInfo(path);
+    if ((file.Attributes & FileAttributes.ReparsePoint) != 0 || file.Length > 131072) throw new InvalidDataException("Invalid history file.");
+    var journal = Parse(File.ReadAllText(path));
+    if (!string.Equals(Path.GetFileNameWithoutExtension(path), journal.Id, StringComparison.OrdinalIgnoreCase))
+     throw new InvalidDataException("Journal ID does not match its file.");
+    result.Add(journal);
+   }
+   catch (Exception e) when (e is JsonException or InvalidDataException or ArgumentException or NullReferenceException or InvalidOperationException or FormatException or OverflowException)
+   {
+    var quarantine = Path.Combine(directory, "quarantine"); Directory.CreateDirectory(quarantine);
+    if ((File.GetAttributes(quarantine) & FileAttributes.ReparsePoint) != 0) throw new IOException("Quarantine directory is not safe.");
+    try { File.Move(path, Path.Combine(quarantine, Guid.NewGuid().ToString("N") + ".bad")); }
+    catch (IOException) { }
+    catch (UnauthorizedAccessException) { }
+    warnings.Add("A malformed history record was quarantined. Valid sessions remain recoverable; applying is blocked until the quarantined record is reviewed.");
+   }
+   catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+   { warnings.Add("A recovery record could not be read. Applying is blocked; other readable sessions remain available."); }
+  }
+  if (HasQuarantinedHistory && warnings.Count == 0) warnings.Add("Quarantined history needs review before a new session can be applied.");
+  return result.OrderByDescending(x => x.CreatedUtc).ToList();
+ }
+ public void Save(Journal journal)
+ {
+  Validate(journal); EnsureDirectory();
   var path = Path.Combine(directory, journal.Id + ".json");
-  var temporary = path + ".tmp";
-  using (var stream = new FileStream(temporary, FileMode.Create, FileAccess.Write, FileShare.None, 4096, FileOptions.WriteThrough))
+  if (File.Exists(path) && (File.GetAttributes(path) & FileAttributes.ReparsePoint) != 0) throw new IOException("Recovery file cannot be a reparse point.");
+  var temporary = Path.Combine(directory, Guid.NewGuid().ToString("N") + ".tmp");
+  using (var stream = new FileStream(temporary, FileMode.CreateNew, FileAccess.Write, FileShare.None, 4096, FileOptions.WriteThrough))
   { JsonSerializer.Serialize(stream, journal, Json); stream.Flush(true); }
   File.Move(temporary, path, true);
  }
+}
+public record OperationProgress(string SessionId, string OperationId, string State, int Completed, int Total);
+public record ExecutionResult(Journal Journal, bool Success, string Message);
+public sealed class TuningEngine
+{
+ private readonly ISettings settings;
+ public IJournalStore Store { get; }
+ private readonly ICapabilityService capabilities;
+ private readonly SemaphoreSlim serial = new(1,1);
+ private readonly Action<string,string,string,long> log;
+ public TuningEngine(ISettings settings, string directory) : this(settings, new JournalStore(directory), new PermissiveCapabilities()) { }
+ public TuningEngine(ISettings settings, IJournalStore store, ICapabilityService capabilities, Action<string,string,string,long>? log = null)
+ { this.settings = settings; Store = store; this.capabilities = capabilities; this.log = log ?? ((_,_,_,_) => {}); }
+ public List<Journal> History() => Store.Load();
  public Journal Apply(string profile, List<Change> changes)
  {
-  if (changes.Count == 0) throw new InvalidOperationException("There are no changes to apply.");
-  if (History().Any(j => j.Status != "restored")) throw new InvalidOperationException("Undo the existing session before applying another profile.");
-  foreach (var change in changes)
-   if (settings.Read(change.Key) != change.Before) throw new InvalidOperationException("Settings changed since preview. Refresh the preview first.");
-  var journal = new Journal { Profile = profile };
-  Save(journal);
+  var result = ApplyAsync(profile, changes).GetAwaiter().GetResult();
+  if (!result.Success) throw new InvalidOperationException(result.Message);
+  return result.Journal;
+ }
+ public async Task<ExecutionResult> ApplyAsync(string profile, List<Change> changes, CancellationToken cancellation = default, IProgress<OperationProgress>? progress = null)
+ {
+  await serial.WaitAsync(cancellation);
   try
   {
-   foreach (var change in changes)
-   {
-    // Persist intent before touching Windows, so an interrupted write can be recovered.
-    journal.Changes.Add(change); Save(journal);
-    settings.Write(change.Key, change.After);
-    if (settings.Read(change.Key) != change.After) throw new IOException("Windows did not accept " + change.Label + ".");
-   }
-   journal.Status = "applied"; Save(journal); return journal;
-  }
-  catch (Exception error)
-  {
-   journal.Status = "interrupted"; Save(journal);
-   throw new InvalidOperationException("Apply stopped: " + error.Message + " Use Undo session to restore the saved settings.", error);
-  }
- }
- public List<string> Restore(Journal journal)
- {
-  var issues = new List<string>();
-  foreach (var change in journal.Changes.AsEnumerable().Reverse())
-  {
-   if (journal.Restored.Contains(change.Key)) continue;
+   if (changes.Count == 0) throw new InvalidOperationException("There are no changes to apply.");
+   var history = Store.Load();
+   if (Store.HasQuarantinedHistory) throw new InvalidOperationException("Review quarantined recovery data before starting a new session.");
+   if (history.Any(j => j.IsActive)) throw new InvalidOperationException("Undo the existing session before applying another profile.");
+   if (changes.Select(c => c.Key).Distinct().Count() != changes.Count) throw new InvalidDataException("Duplicate operations are not allowed.");
+   foreach (var c in changes) Validate(c);
+   var j = new Journal { Profile = profile, Changes = changes.ToList(), Operations = changes.Select(c => new OperationRecord { Id = c.Key, ValueType = Catalog.ValueType(c.Key), Before = c.Before, Target = c.After }).ToList() };
+   Store.Save(j); // All originals and targets are durable before the first write.
    try
    {
-    var current = settings.Read(change.Key);
-    if (current != change.Before && current != change.After) { issues.Add(change.Label + " was changed outside Forge. Restore it manually to " + change.Before + "."); continue; }
-    if (current != change.Before) settings.Write(change.Key, change.Before);
-    if (settings.Read(change.Key) != change.Before) throw new IOException("Restore verification failed.");
-    journal.Restored.Add(change.Key); Save(journal);
+    for (var i = 0; i < changes.Count; i++)
+    {
+     cancellation.ThrowIfCancellationRequested();
+     var c = changes[i]; var op = j.Operations[i]; var watch = Stopwatch.StartNew();
+     Validate(c); // Applicability, policy and preview are rechecked at each boundary.
+     j.Status = "applying"; op.State = "applying"; Store.Save(j);
+     progress?.Report(new(j.Id,c.Key,op.State,i,changes.Count));
+     settings.Write(c.Key,c.After);
+     if (settings.Read(c.Key) != c.After) throw new IOException("Write verification failed.");
+     op.State = "applied"; op.Result = "Read-back verified"; op.DurationMs = watch.ElapsedMilliseconds;
+     Store.Save(j); log(j.Id,c.Key,"applied and verified",op.DurationMs);
+     progress?.Report(new(j.Id,c.Key,op.State,i+1,changes.Count));
+    }
+    j.Status = "applied"; Store.Save(j);
+    return new(j,true,"Session applied and verified. Exact originals are saved.");
    }
-   catch (Exception e) { issues.Add(change.Label + ": " + e.Message); }
+   catch (Exception error)
+   {
+    var cancelled = error is OperationCanceledException;
+    j.Status = "interrupted";
+    try { Store.Save(j); } catch { /* The previous intent remains durable. */ }
+    var problems = RestoreCore(j,progress);
+    return new(j,false,(cancelled ? "Cancelled at a safe boundary." : "Apply stopped.") +
+     (problems.Count == 0 ? " All attempted changes were restored." : " Some settings need recovery review.") + " Session " + j.Id[..8] + ".");
+   }
   }
-  journal.Status = issues.Count == 0 ? "restored" : "restore incomplete"; Save(journal);
-  return issues;
+  finally { serial.Release(); }
  }
-}
-
-public sealed class WindowsSettings : ISettings
-{
- [DllImport("user32.dll", EntryPoint = "SystemParametersInfoW", SetLastError = true)]
- [return: MarshalAs(UnmanagedType.Bool)] private static extern bool GetParameter(uint action, uint parameter, out int value, uint flags);
- [DllImport("user32.dll", EntryPoint = "SystemParametersInfoW", SetLastError = true)]
- [return: MarshalAs(UnmanagedType.Bool)] private static extern bool SetParameter(uint action, uint parameter, IntPtr value, uint flags);
- private static (uint Get, uint Set) Flags(string key) => key switch
- { "animations" => (0x1042, 0x1043), "menus" => (0x1002, 0x1003), _ => throw new ArgumentException("Unknown setting.") };
- public string Read(string key)
+ private void Validate(Change c)
  {
-  if (key == "power") return GuidFrom(RunPower("/getactivescheme"));
-  if (!GetParameter(Flags(key).Get, 0, out var value, 0)) throw new Win32Exception(Marshal.GetLastWin32Error());
-  return value == 0 ? "Off" : "On";
+  Catalog.ValidateTarget(c.Key,c.Before); Catalog.ValidateTarget(c.Key,c.After);
+  var cap = capabilities.Check(c.Key,c.After);
+  if (!cap.Eligible) throw new InvalidOperationException(c.Label + ": " + cap.Reason);
+  if (settings.Read(c.Key) != c.Before) throw new InvalidOperationException("The preview is stale. Refresh and review again.");
  }
- public void Write(string key, string value)
+ public List<string> Restore(Journal journal) { serial.Wait(); try { return RestoreCore(journal,null); } finally { serial.Release(); } }
+ public async Task<List<string>> RestoreAsync(Journal journal, IProgress<OperationProgress>? progress = null)
+ { await serial.WaitAsync(); try { return RestoreCore(journal,progress); } finally { serial.Release(); } }
+ private List<string> RestoreCore(Journal journal, IProgress<OperationProgress>? progress)
  {
-  if (key == "power")
+  JournalStore.Validate(journal);
+  var issues = new List<string>();
+  for (var i = journal.Operations.Count - 1; i >= 0; i--)
   {
-   var id = Guid.Parse(value).ToString();
-   if (!Plans().Any(p => p.Id == id)) throw new InvalidOperationException("That power plan is unavailable on this PC.");
-   RunPower("/setactive", id); return;
+   var op = journal.Operations[i];
+   if (op.State == "rolled back" || journal.Restored.Contains(op.Id)) continue;
+   if (op.State == "prepared") { op.State = "rolled back"; journal.Restored.Add(op.Id); continue; }
+   try
+   {
+    var current = settings.Read(op.Id);
+    if (current != op.Before && current != op.Target)
+    { op.State = "conflict"; op.Result = "Changed outside EZoptimizer; current value preserved"; issues.Add(Catalog.Get(op.Id).Title + " has an external conflict."); Store.Save(journal); continue; }
+    if (current != op.Before)
+    {
+     var cap = capabilities.Check(op.Id,op.Before);
+     if (!cap.Eligible) throw new InvalidOperationException("Current capability or policy prevents restoration.");
+     journal.Status = "rolling back"; op.State = "rolling back"; Store.Save(journal);
+     settings.Write(op.Id,op.Before);
+    }
+    if (settings.Read(op.Id) != op.Before) throw new IOException("Restore verification failed.");
+    op.State = "rolled back"; op.Result = "Original value verified"; journal.Restored.Add(op.Id); Store.Save(journal);
+    log(journal.Id,op.Id,"restored and verified",op.DurationMs);
+    progress?.Report(new(journal.Id,op.Id,op.State,journal.Restored.Count,journal.Operations.Count));
+   }
+   catch
+   { op.State = "failed"; journal.Restored.Remove(op.Id); op.Result = "Could not verify original value or persist recovery state"; issues.Add(Catalog.Get(op.Id).Title + " could not be restored. Retry recovery."); try { Store.Save(journal); } catch { } }
   }
-  if (value is not ("On" or "Off")) throw new ArgumentException("Invalid setting value.");
-  if (!SetParameter(Flags(key).Set, 0, value == "On" ? new IntPtr(1) : IntPtr.Zero, 3)) throw new Win32Exception(Marshal.GetLastWin32Error());
- }
- public List<PowerPlan> Plans() => RunPower("/list").Split('\n').Where(line => Regex.IsMatch(line, "[a-fA-F0-9]{8}-[a-fA-F0-9-]{27}"))
-  .Select(line => new PowerPlan(GuidFrom(line), Regex.Match(line, @"\((.*)\)").Groups[1].Value)).ToList();
- private static string GuidFrom(string value) => Guid.Parse(Regex.Match(value, "[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}").Value).ToString();
- private static string RunPower(params string[] arguments)
- {
-  var info = new ProcessStartInfo(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "powercfg.exe"))
-  { UseShellExecute = false, RedirectStandardOutput = true, RedirectStandardError = true, CreateNoWindow = true };
-  foreach (var argument in arguments) info.ArgumentList.Add(argument);
-  using var process = Process.Start(info) ?? throw new IOException("Cannot start Windows power configuration.");
-  var output = process.StandardOutput.ReadToEndAsync(); var error = process.StandardError.ReadToEndAsync();
-  if (!process.WaitForExit(10000)) { process.Kill(); throw new TimeoutException("Windows power configuration timed out."); }
-  Task.WaitAll(output, error);
-  if (process.ExitCode != 0) throw new IOException("Windows rejected the power plan change. " + error.Result.Trim());
-  return output.Result;
+  journal.Status = issues.Count == 0 ? "restored" : "restore incomplete";
+  try { Store.Save(journal); } catch { issues.Add("Recovery state could not be saved. Keep the history folder and retry."); journal.Status = "restore incomplete"; }
+  return issues;
  }
 }
