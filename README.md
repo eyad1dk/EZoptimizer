@@ -1,90 +1,67 @@
 # EZoptimizer
 
-Set up your Windows PC for what you're about to do.
-
-EZoptimizer brings a live system overview, practical Windows controls and reversible tuning profiles into one desktop app. Review the proposed changes before applying, with original settings saved locally.
+A native Windows app for setting up a PC around your workload. Choose a conservative profile, review the exact changes, and keep a clear path back to your original settings.
 
 ![EZoptimizer overview](docs/overview.png)
 
-## What's inside
+## Download
 
-- **Gaming:** prefers an installed High performance plan and reduces desktop animations.
-- **Coding:** uses Balanced power and reduced animations, with an optional keep-awake session for long builds.
-- **Everyday:** Balanced power with Windows animations enabled.
-- **Quiet:** prefers an installed Power saver plan with reduced animations.
-- **Live overview:** CPU usage, physical memory usage, system-drive free space and pressure hints.
-- **Inspection:** the twelve largest processes by working set, plus startup entries from Run keys and startup folders.
-- **Windows tools:** Game Mode, captures, graphics preferences, storage, startup, updates and notifications.
-- **History and undo:** durable change records, read-back verification and recovery after an interrupted apply.
-- **Local reports:** export system information without usernames, paths or process names.
+Get **EZoptimizer.exe** from [Releases](https://github.com/eyad1dk/EZoptimizer/releases). The portable x64 build includes .NET 10; no installer or separate runtime is needed. This is an **unsigned preview**, not a signed production release.
 
-Profiles are presets for two animation preferences and an existing power plan. They do not change game files or compiler settings. If the preferred plan is missing, the current plan stays selected. You can change the selection before applying.
+Open Profiles, stage Gaming, Coding, Everyday, Quiet or Battery Saver, then expand the review queue. Click **Preview exact changes**, inspect the before/after values, and click **Apply reviewed changes**. Undo the active session in **Recovery & History** before trying another batch.
 
-## Download and run
+Gaming and Coding start with reduced animation and Balanced power. Quiet and Battery Saver prefer an installed Power saver plan. Missing plans are skipped. Presets change desktop preferences and a power plan; they do not change game files or compiler flags, and they do not guarantee faster games or builds.
 
-Get **EZoptimizer.exe** from [Releases](https://github.com/eyad1dk/EZoptimizer/releases). This is a portable, self-contained Windows x64 app; no installer or separate .NET runtime is needed. Launch it, choose **Profiles**, review your options, click **Preview changes**, then **Apply reviewed changes**.
+## What works
 
-Use **History & undo → Undo session** to restore the saved settings before trying another profile.
+- Seven native pages with dark, light, Windows-following and high-contrast themes.
+- Timestamped CPU, memory and free-space readings, short trends and cached hardware inventory. A missing CPU baseline is shown as warming up.
+- Explained recommendations based on observed pressure, battery state and workload tradeoffs.
+- Three reversible controls: app animations, menu animations and an installed power plan. Selection only stages a value.
+- A persistent desired-value queue, fresh previews, per-write revalidation, verification, cancellation and compensating undo after failure.
+- Versioned recovery records, migration of v0.1 history, malformed-file quarantine and conflict-preserving retry.
+- Five built-in profiles and validated custom profile import/export. Profiles cannot contain scripts or arbitrary commands.
+- An opt-in session for an explicitly selected running game. It uses reviewed settings and attempts exact restoration on process exit or normal app exit. A crash leaves its journal for manual recovery.
+- Read-only process, startup, registered-application, adapter and DNS inventories; user-selected bounded ICMP measurements.
+- Local before/after CPU/RAM sampling with workload context. These measurements do not stand in for FPS, frame time, input latency or build completion time.
+- Session keep-awake, Windows Settings shortcuts, reviewed diagnostic export and rotating redacted local logs.
+- Supplementary Windows restore-point inspection and a separately reviewed creation operation. Only that operation requests UAC.
+- Manual stable/preview update checks against this repository. Installation stays manual until a publisher signing trust chain exists.
 
-Version 0.1.0 is a preview. The executable is unsigned. The initial build has been checked on Windows 10 x64; Windows 11 and a wider range of hardware still need hands-on testing. Some PCs expose only a Balanced power plan, and managed PCs may restrict changes.
-
-## What changes
-
-| Control | Mechanism | Tradeoff |
-| --- | --- | --- |
-| App animations | Windows SystemParametersInfoW | Less motion; apps may ignore the preference |
-| Menu animations | Windows SystemParametersInfoW | Menus appear without their usual animation |
-| Power plan | Windows powercfg /setactive | Higher performance plans can use more power and increase heat |
-| Keep awake | Windows SetThreadExecutionState | Stops idle sleep while this app is open; the screen can still turn off |
-
-Animation preferences change how the desktop feels. They do not promise higher FPS. Power-plan benefits depend on hardware, cooling and workload. Measure an actual game or build before and after if you're comparing performance.
-
-EZoptimizer does not disable antivirus, Windows Update, services or security features. It does not delete files, purge memory, alter process priorities, apply network tweaks or install drivers. Storage cleanup opens Windows so you can review what will be deleted.
+Privacy, gaming, network, debloat and maintenance include clearly labeled Windows shortcuts where no tested reversible mutation contract is available. No package removal or permanent cleanup is bundled into profiles. See the [feature matrix](docs/FEATURES.md) for implemented controls, diagnostics and deferrals.
 
 ## Recovery and privacy
 
-Change history is stored in %LOCALAPPDATA%\EZoptimizer\history. The engine writes intent to disk before each Windows change, then reads the value back. On an interrupted apply, open the app again and use Undo.
+History remains in `%LOCALAPPDATA%\EZoptimizer\history`; preserve it across upgrades. The app saves and flushes originals before changing Windows, verifies writes and retains unresolved recovery state. Undo leaves external changes intact. Malformed records are quarantined; readable sessions still recover independently, and new batches are blocked until the unknown history is reviewed.
 
-If another app changes a setting after the session, Undo leaves that setting alone and reports the conflict. Restoring other settings still proceeds. Only one session can be active at a time, and only one app instance can run per user session.
+`EZoptimizer.exe --recovery` opens recovery without dashboard probes. System Restore supplements exact undo; it is not a personal-file backup. Read [recovery guidance](docs/RECOVERY.md) before editing or removing history.
 
-There is no telemetry, account system, background service or automatic updater. Reports stay wherever you save them. Windows tools open locally. Startup inspection is partial; it does not include every scheduled task or packaged startup app.
+There is no telemetry, account, background service or automatic upload. Reports omit user paths, command lines, process/startup names, network identities, profile names and original setting values by default. You review the report before saving it. Update checks contact GitHub only when clicked; endpoint tests contact only the endpoint you enter.
 
-## Build from source
+## Compatibility and validation
 
-Install the .NET 8 SDK on Windows, then run:
+The current local reference host is Windows 10 Pro 22H2 x64, build 19045, with a Core i5-9400F and GTX 1660 SUPER. Its ESU enrollment is unknown. Use an OS eligible for security servicing. Windows 11, managed/OEM laptops, real System Restore creation and mutating game-session tests still require disposable VM/hardware validation. ARM64 packaging is deferred.
 
-~~~powershell
+The v0.2 build passes 39 simulated regression checks and read-only native smoke/preview checks. All seven pages are laid out across four themes and 100/150/200% emulated scaling. Built-in WPF renders use actual local readings; native desktop screenshot capture timed out. Full Narrator, keyboard traversal, actual OS high-contrast/DPI transitions and Windows 11 validation remain open. See [validation and measured overhead](docs/VALIDATION.md); no universal performance claim is made.
+
+## Build
+
+Use the .NET 10 SDK on Windows:
+
+```powershell
 dotnet build src/ForgePC/ForgePC.csproj -c Release
 dotnet run --project tests/ForgePC.Tests/ForgePC.Tests.csproj -c Release
 dotnet publish src/ForgePC/ForgePC.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:DebugType=None -p:DebugSymbols=false -o artifacts
-~~~
+$check = Start-Process artifacts/EZoptimizer.exe -ArgumentList '--smoke-test' -WindowStyle Hidden -Wait -PassThru
+$check.ExitCode
+artifacts/EZoptimizer.exe --render-preview overview.png
+artifacts/EZoptimizer.exe --ui-check ui-checks.json
+```
 
-The result is artifacts/EZoptimizer.exe. The source folder and namespace use the original working name, ForgePC.
+The original `ForgePC` namespace is retained. System.Management is the only added package. The [architecture notes](docs/ARCHITECTURE.md) explain the boundaries. Default checks never mutate Windows settings; mutating integration tests belong in disposable VMs with snapshots.
 
-Run the packaged app's read-only compatibility check:
-
-~~~powershell
-$result = Start-Process artifacts/EZoptimizer.exe -ArgumentList '--smoke-test' -Wait -PassThru
-$result.ExitCode
-~~~
-
-Exit code 0 means the UI could be constructed and native memory, process, startup, power-plan and animation reads succeeded. It does not prove tuning works on every device. The regression suite uses a simulated backend to exercise apply failures and recovery without changing the test machine.
-
-## Releases
-
-The included GitHub Actions workflow tests and builds the app on pushes and pull requests. Pushing a version tag also attaches the executable and its SHA-256 checksum to a preview release.
-
-The repository owner can publish the next version after updating the version and release notes:
-
-~~~powershell
-git tag v0.1.1
-git push origin v0.1.1
-~~~
-
-Allow Actions to finish before sharing the release link. Never commit local bin or obj folders.
+The release workflow now targets .NET 10. GitHub Actions execution on this account is currently blocked by an account/billing restriction; this release was built and checked locally. Do not interpret the workflow file as a passing hosted run.
 
 ## Contribute
 
-Bug reports with reproduction steps and Windows version are useful. Suggestions should explain the workload, the measurable benefit and how the change can be undone. Read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request.
-
-MIT licensed. Technical references: [Windows power configuration](https://learn.microsoft.com/en-us/windows-hardware/design/device-experiences/powercfg-command-line-options), [system UI parameters](https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-systemparametersinfow), and [session sleep requests](https://learn.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-setthreadexecutionstate).
+Read [CONTRIBUTING.md](CONTRIBUTING.md) and [SECURITY.md](SECURITY.md). Report reproducible behavior and measurements, not promised tweak counts. MIT licensed.
