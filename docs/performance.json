@@ -1,0 +1,23 @@
+{
+  "StartupToInventoryReadyMs": 662,
+  "LogicalProcessors": 6,
+  "RenderingTier": 2,
+  "WarmupSecondsPerPhase": 10,
+  "Phases": [
+    {
+      "State": "Visible idle",
+      "Seconds": 20.192522,
+      "CpuPercentOfMachine": 0.21924361689243357,
+      "AverageWorkingSetMiB": 112.8896484375,
+      "PeakWorkingSetMiB": 124.73046875
+    },
+    {
+      "State": "Minimized",
+      "Seconds": 20.1309229,
+      "CpuPercentOfMachine": 0.20697836807478487,
+      "AverageWorkingSetMiB": 113.269140625,
+      "PeakWorkingSetMiB": 114.296875
+    }
+  ],
+  "Limitations": "One local run; warm disk cache, background apps uncontrolled. No tuning applied. Not a gaming-performance benchmark."
+}
