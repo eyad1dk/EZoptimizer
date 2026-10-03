@@ -4,7 +4,7 @@ A native Windows app for setting up a PC around your workload. Choose a conserva
 
 ![EZoptimizer overview](docs/overview.png)
 
-**New in v0.2.1:** a redesigned charcoal-and-mint interface, visual profile cards, an adaptive icon sidebar, a custom window frame and consistent controls. [See the design update](docs/REDESIGN.md).
+**New in v0.3.0:** logo-free styling, 15 reversible preference controls, optional reduced-motion profiles, gaming readiness, frame-time CSV comparisons and coding workspace inspection. [See the design update](docs/REDESIGN.md).
 
 ## Download
 
@@ -19,12 +19,13 @@ Gaming and Coding start with reduced animation and Balanced power. Quiet and Bat
 - Seven native pages with dark, light, Windows-following and high-contrast themes.
 - Timestamped CPU, memory and free-space readings, short trends and cached hardware inventory. A missing CPU baseline is shown as warming up.
 - Explained recommendations based on observed pressure, battery state and workload tradeoffs.
-- Three reversible controls: app animations, menu animations and an installed power plan. Selection only stages a value.
+- Fifteen reversible controls: native visual effects, dragging behavior, submenu delay, pointer speed, keyboard repeat preferences and an installed power plan. Selection only stages a value.
 - A persistent desired-value queue, fresh previews, per-write revalidation, verification, cancellation and compensating undo after failure.
 - Versioned recovery records, migration of v0.1 history, malformed-file quarantine and conflict-preserving retry.
 - Five built-in profiles and validated custom profile import/export. Profiles cannot contain scripts or arbitrary commands.
 - An opt-in session for an explicitly selected running game. It uses reviewed settings and attempts exact restoration on process exit or normal app exit. A crash leaves its journal for manual recovery.
 - Read-only process, startup, registered-application, adapter and DNS inventories; user-selected bounded ICMP measurements.
+- Frame-time CSV baseline/comparison with average FPS, slowest-1% FPS and p95/p99 frame times; bounded read-only coding-folder inspection and display/power readiness.
 - Local before/after CPU/RAM sampling with workload context. These measurements do not stand in for FPS, frame time, input latency or build completion time.
 - Session keep-awake, Windows Settings shortcuts, reviewed diagnostic export and rotating redacted local logs.
 - Supplementary Windows restore-point inspection and a separately reviewed creation operation. Only that operation requests UAC.
@@ -44,7 +45,7 @@ There is no telemetry, account, background service or automatic upload. Reports 
 
 The current local reference host is Windows 10 Pro 22H2 x64, build 19045, with a Core i5-9400F and GTX 1660 SUPER. Its ESU enrollment is unknown. Use an OS eligible for security servicing. Windows 11, managed/OEM laptops, real System Restore creation and mutating game-session tests still require disposable VM/hardware validation. ARM64 packaging is deferred.
 
-The v0.2.1 build passes 39 simulated regression checks and read-only native smoke/preview checks. All seven pages are laid out across four themes and 100/150/200% emulated scaling. Built-in WPF renders use actual local readings; native desktop screenshot capture timed out. Full Narrator, keyboard traversal, actual OS high-contrast/DPI transitions and Windows 11 validation remain open. See [validation and measured overhead](docs/VALIDATION.md); no universal performance claim is made.
+The v0.3.0 build passes 51 simulated regression checks and read-only native smoke/preview checks. All seven pages are laid out across four themes and 100/150/200% emulated scaling. Built-in WPF renders use actual local readings; native desktop screenshot capture timed out. Full Narrator, keyboard traversal, actual OS high-contrast/DPI transitions and Windows 11 validation remain open. See [validation and measured overhead](docs/VALIDATION.md); no universal performance claim is made.
 
 ## Build
 
