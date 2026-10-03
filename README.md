@@ -4,6 +4,8 @@ A native Windows app for setting up a PC around your workload. Choose a conserva
 
 ![EZoptimizer overview](docs/overview.png)
 
+**New in v0.2.1:** a redesigned charcoal-and-mint interface, visual profile cards, an adaptive icon sidebar, a custom window frame and consistent controls. [See the design update](docs/REDESIGN.md).
+
 ## Download
 
 Get **EZoptimizer.exe** from [Releases](https://github.com/eyad1dk/EZoptimizer/releases). The portable x64 build includes .NET 10; no installer or separate runtime is needed. This is an **unsigned preview**, not a signed production release.
@@ -42,7 +44,7 @@ There is no telemetry, account, background service or automatic upload. Reports 
 
 The current local reference host is Windows 10 Pro 22H2 x64, build 19045, with a Core i5-9400F and GTX 1660 SUPER. Its ESU enrollment is unknown. Use an OS eligible for security servicing. Windows 11, managed/OEM laptops, real System Restore creation and mutating game-session tests still require disposable VM/hardware validation. ARM64 packaging is deferred.
 
-The v0.2 build passes 39 simulated regression checks and read-only native smoke/preview checks. All seven pages are laid out across four themes and 100/150/200% emulated scaling. Built-in WPF renders use actual local readings; native desktop screenshot capture timed out. Full Narrator, keyboard traversal, actual OS high-contrast/DPI transitions and Windows 11 validation remain open. See [validation and measured overhead](docs/VALIDATION.md); no universal performance claim is made.
+The v0.2.1 build passes 39 simulated regression checks and read-only native smoke/preview checks. All seven pages are laid out across four themes and 100/150/200% emulated scaling. Built-in WPF renders use actual local readings; native desktop screenshot capture timed out. Full Narrator, keyboard traversal, actual OS high-contrast/DPI transitions and Windows 11 validation remain open. See [validation and measured overhead](docs/VALIDATION.md); no universal performance claim is made.
 
 ## Build
 

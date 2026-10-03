@@ -1,17 +1,17 @@
-# EZoptimizer v0.2.0 preview
+# EZoptimizer v0.2.1 preview
 
-A substantial native upgrade with a reviewed-change workflow and stronger recovery.
+A complete visual refresh for the native Windows app.
 
-- Seven pages, shared design resources, dark/light/Windows/high-contrast themes and lazy page creation.
-- Persistent desired-value queue and exact previews; stale assumptions and policy are rechecked before every write.
-- Schema-2 per-operation journals, v0.1 history migration, malformed-history quarantine, cancellation, compensation and conflict-preserving retry.
-- Conservative Gaming/Coding/Everyday/Quiet/Battery Saver presets and strict custom-profile import/export.
-- Cached hardware inventory, timestamped measurements, explained recommendations, partial process/startup/app inventory and adapter/DNS inspection.
-- Explicit running-game selection, automatic undo attempts on observed game exit or normal app exit, and durable recovery after interruption.
-- Chosen-endpoint bounded ICMP tests, local before/after sample comparisons, reviewed redacted reports and rotating local logs.
-- Optional supplementary System Restore inspection/creation with a fixed reviewed UAC helper; no forced protection or throttling changes.
-- Manual official stable/preview release checks. No executable updates are downloaded or installed by the app.
+- Charcoal and mint colors, clearer typography, quieter borders and consistent spacing.
+- An icon sidebar that adapts to narrow windows, a custom title bar and a matching executable icon.
+- A rebuilt dashboard with compact readings, current-session details and quick profile navigation.
+- Visual profile cards with a separate review/staging action.
+- Redesigned inputs, dropdowns, buttons, checkboxes, scrollbars and expandable sections.
+- A recovery empty state and a review area that fits smaller windows.
+- Dark, light, Windows-following and high-contrast themes.
 
-39 default regression checks pass. Native read-only smoke and WPF layout/render checks pass on Windows 10 x64. Windows 11, mutating native integration, actual System Restore creation, full Narrator and physical DPI/high-contrast transitions remain unverified. See docs/VALIDATION.md and docs/FEATURES.md for evidence and deferred work.
+The existing preview, journals and exact undo remain in place. Selecting a profile card does not apply any settings.
 
-The portable executable includes .NET 10 and is unsigned. SHA256SUMS.txt checks file integrity, not independent publisher identity. Preserve %LOCALAPPDATA%\EZoptimizer\history through upgrades. This release was built locally; GitHub Actions execution is blocked by the account's billing restriction.
+39 regression checks, the packaged read-only smoke check and 84 responsive theme/page/scaling layouts pass locally. Screenshots are actual-content WPF renders. Full Narrator/keyboard traversal, native Windows 11 integration and real OS DPI transitions remain pending. See the validation notes for the complete limits.
+
+This portable x64 build includes .NET 10 and is unsigned. Preserve your existing recovery history when upgrading. GitHub Actions remains blocked by the account billing restriction; the build and checks ran locally.
